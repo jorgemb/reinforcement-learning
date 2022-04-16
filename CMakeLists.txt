@@ -4,7 +4,7 @@
 cmake_minimum_required (VERSION 3.8)
 project ("reinforcement-learning")
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 # Conan - Dependency management
@@ -24,11 +24,22 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 #                         SETTINGS ${settings})
 # endforeach()
 
- include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
- conan_basic_setup()
+# Installing dependencies
+# DEBUG
+# conan install . --install-folder build --build=missing -s build_type=Debug
+# RELEASE
+# conan install . --install-folder build --build=missing -s build_type=Release
+
+# Dependencies
+include(${CMAKE_BINARY_DIR}/conan_paths.cmake)
+# include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+# conan_basic_setup()
+
+find_package(Boost 1.78.0 REQUIRED COMPONENTS unit_test_framework)
 
 # Testing library
-find_package(Boost 1.78.0 REQUIRED)
+set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)
+include(CTest)
 
 # Add other projects
 add_subdirectory(tic-tac-toe/)
