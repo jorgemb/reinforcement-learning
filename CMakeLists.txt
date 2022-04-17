@@ -35,11 +35,13 @@ include(${CMAKE_BINARY_DIR}/conan_paths.cmake)
 # include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 # conan_basic_setup()
 
-find_package(Boost 1.78.0 REQUIRED COMPONENTS unit_test_framework)
+find_package(Boost 1.78.0 REQUIRED)
+find_package(Catch2 REQUIRED)
 
 # Testing library
 set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)
 include(CTest)
+include(Catch)
 
 # Add other projects
 add_subdirectory(tic-tac-toe/)
