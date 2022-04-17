@@ -7,10 +7,9 @@ set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/
   
 project ("reinforcement-learning")
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED true)
+# set(CMAKE_CXX_STANDARD 17)
+# set(CMAKE_CXX_STANDARD_REQUIRED true)
 
-find_package(Boost 1.78.0 REQUIRED)
 find_package(Catch2 REQUIRED)
 
 # Testing library

@@ -3,9 +3,10 @@ cmake_minimum_required(VERSION 3.8)
 project("tic-tac-toe" VERSION 0.1)
 
 # Executables
-add_executable(run-tictactoe "run.cpp" "tictactoe.h" "test-tictactoe.cpp")
+# add_executable(run-tictactoe "run.cpp" "tictactoe.h" "test-tictactoe.cpp")
 
 # Tests
-add_executable(test-tictactoe "test-tictactoe.cpp")
+find_package(Catch2 REQUIRED)
+add_executable(testttt "test-tictactoe.cpp")
 # target_include_directories(test-tictactoe PRIVATE ${Boost_INCLUDE_DIRS})
-target_link_libraries(test-tictactoe PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(testttt PRIVATE Catch2::Catch2)
