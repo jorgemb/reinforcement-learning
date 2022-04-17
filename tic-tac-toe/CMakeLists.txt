@@ -8,5 +8,5 @@ project("tic-tac-toe" VERSION 0.1)
 # Tests
 add_executable(testttt "test-tictactoe.cpp")
 # target_include_directories(test-tictactoe PRIVATE ${Boost_INCLUDE_DIRS})
-target_link_libraries(testttt PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(testttt PRIVATE Catch2::Catch2)
 catch_discover_tests(testttt)
