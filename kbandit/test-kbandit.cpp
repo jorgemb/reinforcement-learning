@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <numeric>
 #include <functional>
-#include <execution>
 #include <limits>
 
 using namespace Catch::literals;
