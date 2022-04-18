@@ -27,7 +27,7 @@ TEST_CASE("Single bandit", "[kbandit]") {
 	}
 
 	// Generate values for testing
-	const unsigned int n = 10000;
+	const unsigned int n = 100000;
 	std::vector<double> values(n, 0.0);
 	std::for_each(values.begin(), values.end(), [&bandit](double& val) { return val = bandit(); });
 	SECTION("Approximate values") {

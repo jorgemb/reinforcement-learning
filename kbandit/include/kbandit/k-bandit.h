@@ -96,5 +96,59 @@ private:
 	std::size_t m_best_bandit;
 };
 
+class KBanditsAgent {
+public:
+	/// <summary>
+	/// Constructor with the amount of bandits
+	/// </summary>
+	/// <param name="total_bandits"></param>
+	KBanditsAgent(std::size_t total_bandits);
+
+	/// <summary>
+	/// Virtual destructor
+	/// </summary>
+	virtual ~KBanditsAgent() {}
+
+	/// <summary>
+	/// Returns the next selection to be made
+	/// </summary>
+	/// <returns></returns>
+	virtual std::size_t get_selection() const = 0;
+
+	/// <summary>
+	/// Adds a reward to the agent
+	/// </summary>
+	/// <param name="selection"></param>
+	/// <param name="reward"></param>
+	virtual void add_reward(std::size_t selection, double reward) = 0;
+protected:
+	std::size_t total_bandits() const;
+
+private:
+	const std::size_t m_total_bandits;
+};
+
+class BasicGreedyAgent : public KBanditsAgent{
+public:
+	BasicGreedyAgent(std::size_t bandits, double epsilon);
+	virtual std::size_t get_selection() const override;
+	virtual void add_reward(std::size_t selection, double reward) override;
+private:
+	/// <summary>
+	/// Returns true if the next selection should be the greedy one
+	/// </summary>
+	/// <returns></returns>
+	bool do_greedy() const;
+
+	double m_epsilon;
+
+	mutable std::default_random_engine m_engine;
+	std::uniform_int_distribution<std::size_t> m_bandit_distribution;
+	std::bernoulli_distribution m_greedy_option_distribution;
+
+	std::vector<std::vector<double>> m_rewards;
+	std::vector<double> m_expected_rewards;
+};
+
 #endif // !GUARD_K_BANDIT_H
 

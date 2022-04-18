@@ -9,6 +9,10 @@ add_library(kbandit STATIC
 )
 target_include_directories(kbandit PUBLIC "include")
 
+# Run bandits
+add_executable(run-kbandits "run-kbandit.cpp")
+target_link_libraries(run-kbandits PRIVATE kbandit)
+
 # Tests
 add_executable(test-kbandit "test-kbandit.cpp")
 target_link_libraries(test-kbandit PRIVATE kbandit Catch2::Catch2)
