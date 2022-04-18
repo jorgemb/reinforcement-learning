@@ -2,6 +2,7 @@
 
 #include <random>
 #include <numeric>
+#include <algorithm>
 
 KBandits::KBandits(double reward_mean, double reward_variance, double bandit_variance, std::size_t bandits): m_best_bandit(-1) {
 	// Create distribution for rewards

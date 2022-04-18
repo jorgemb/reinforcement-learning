@@ -150,8 +150,8 @@ private:
 	double m_epsilon;
 
 	mutable std::default_random_engine m_engine;
-	std::uniform_int_distribution<std::size_t> m_bandit_distribution;
-	std::bernoulli_distribution m_greedy_option_distribution;
+	mutable std::uniform_int_distribution<std::size_t> m_bandit_distribution;
+	mutable std::bernoulli_distribution m_greedy_option_distribution;
 
 	std::vector<std::vector<double>> m_rewards;
 	std::vector<double> m_expected_rewards;

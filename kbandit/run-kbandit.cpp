@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <numeric>
+#include <algorithm>
 
 void do_test(const std::string& agent_name, KBanditsAgent* agent, unsigned int tests, KBandits& bandits) {
 	std::cout << agent_name << " agent\n";
