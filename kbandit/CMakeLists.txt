@@ -12,4 +12,7 @@ target_include_directories(kbandit PUBLIC "include")
 # Tests
 add_executable(test-kbandit "test-kbandit.cpp")
 target_link_libraries(test-kbandit PRIVATE kbandit Catch2::Catch2)
+set_target_properties(test-kbandit PROPERTIES
+	CXX_STANDARD 20
+	CXX_STANDARD_REQUIRED on)
 catch_discover_tests(test-kbandit)
