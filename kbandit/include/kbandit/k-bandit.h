@@ -71,14 +71,14 @@ public:
 	/// </summary>
 	/// <param name="k"></param>
 	/// <returns></returns>
-	double get_reward(unsigned int k);
+	double get_reward(std::size_t k);
 
 	/// <summary>
 	/// Returns a reference to the bandit
 	/// </summary>
 	/// <param name="k"></param>
 	/// <returns></returns>
-	Bandit<>& get_bandit(unsigned int k);
+	Bandit<>& get_bandit(std::size_t k);
 
 	/// <summary>
 	/// Returns the number of bandits
@@ -116,6 +116,12 @@ public:
 	virtual std::size_t get_selection() const = 0;
 
 	/// <summary>
+	/// Returns the best bandit according to the agent
+	/// </summary>
+	/// <returns></returns>
+	virtual std::size_t get_best_bandit() const = 0;
+
+	/// <summary>
 	/// Adds a reward to the agent
 	/// </summary>
 	/// <param name="selection"></param>
@@ -132,6 +138,7 @@ class BasicGreedyAgent : public KBanditsAgent{
 public:
 	BasicGreedyAgent(std::size_t bandits, double epsilon);
 	virtual std::size_t get_selection() const override;
+	virtual std::size_t get_best_bandit() const override;
 	virtual void add_reward(std::size_t selection, double reward) override;
 private:
 	/// <summary>

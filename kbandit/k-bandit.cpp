@@ -21,11 +21,11 @@ KBandits::KBandits(double reward_mean, double reward_variance, double bandit_var
 	}
 }
 
-double KBandits::get_reward(unsigned int k) {
+double KBandits::get_reward(std::size_t k) {
 	return m_bandits[k]();
 }
 
-Bandit<>& KBandits::get_bandit(unsigned int k) {
+Bandit<>& KBandits::get_bandit(std::size_t k) {
 	return m_bandits[k];
 }
 
@@ -53,13 +53,17 @@ BasicGreedyAgent::BasicGreedyAgent(std::size_t bandits, double epsilon):
 
 std::size_t BasicGreedyAgent::get_selection() const{
 	if (do_greedy()) {
-		auto iter_element = std::max_element(m_expected_rewards.cbegin(), m_expected_rewards.cend());
-		return std::distance(m_expected_rewards.cbegin(), iter_element);
+		return get_best_bandit();
 	}
 	else {
 		// Select a random option
 		return m_bandit_distribution(m_engine);
 	}
+}
+
+std::size_t BasicGreedyAgent::get_best_bandit() const {
+	auto iter_element = std::max_element(m_expected_rewards.cbegin(), m_expected_rewards.cend());
+	return std::distance(m_expected_rewards.cbegin(), iter_element);
 }
 
 void BasicGreedyAgent::add_reward(std::size_t selection, double reward) {
