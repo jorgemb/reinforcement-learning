@@ -20,7 +20,7 @@ set_target_properties(kbandit PROPERTIES
 
 # Run bandits
 add_executable(run-kbandits "run-kbandit.cpp")
-target_link_libraries(run-kbandits PRIVATE kbandit)
+target_link_libraries(run-kbandits PRIVATE kbandit fmt::fmt)
 
 if (MSVC) 
   target_link_options(run-kbandits PRIVATE $<$<CONFIG:DEBUG>:/PROFILE>)

@@ -5,26 +5,21 @@
 #include <limits>
 #include <array>
 
-template<class Engine = std::default_random_engine>
+/// <summary>
+/// Creates a new random engine with the given seed or with a random one
+/// </summary>
+/// <param name="seed"></param>
+/// <returns></returns>
+std::default_random_engine create_random_engine(std::default_random_engine::result_type seed = std::numeric_limits<std::default_random_engine::result_type>::max());
+
 class Bandit {
 public:
+	using Engine = std::default_random_engine;
+
 	/// <summary>
 	/// Initializes the Bandit with the given average and variance, and optinally a seed.
 	/// </summary>
-	Bandit(double reward, double variance, typename Engine::result_type seed = std::numeric_limits<typename Engine::result_type>::max())
-		: m_reward(reward), m_variance(variance), m_distribution(reward, variance)
-	{
-		// Determine seed
-		if (seed == std::numeric_limits<typename Engine::result_type>::max()) {
-			// Create a new seed
-			std::random_device dev;
-			m_generator.seed(dev());
-		}
-		else {
-			// Use given seed
-			m_generator.seed(seed);
-		}
-	}
+	Bandit(double reward, double variance, typename Engine::result_type seed = std::numeric_limits<typename Engine::result_type>::max());
 
 	/// <summary>
 	/// Returns a random value from the Bandit distribution
@@ -59,12 +54,18 @@ private:
 
 class KBandits {
 public:
+	using Engine = std::default_random_engine;
+
 	/// <summary>
 	/// Creates the bandits with the given mean reward and variance
 	/// </summary>
 	/// <param name="reward_mean"></param>
 	/// <param name="reward_variance"></param>
-	KBandits(double reward_mean, double reward_variance, double bandit_variance = 1.0, std::size_t bandits = 10);
+	KBandits(double reward_mean,
+		double reward_variance, 
+		double bandit_variance = 1.0,
+		std::size_t bandits = 10,
+		Engine::result_type seed = std::numeric_limits<Engine::result_type>::max());
 
 	/// <summary>
 	/// Gets a random reward from the given bandit
@@ -78,7 +79,7 @@ public:
 	/// </summary>
 	/// <param name="k"></param>
 	/// <returns></returns>
-	Bandit<>& get_bandit(std::size_t k);
+	Bandit& get_bandit(std::size_t k);
 
 	/// <summary>
 	/// Returns the number of bandits
@@ -92,7 +93,7 @@ public:
 	/// <returns></returns>
 	std::size_t best_bandit() const;
 private:
-	std::vector<Bandit<>> m_bandits;
+	std::vector<Bandit> m_bandits;
 	std::size_t m_best_bandit;
 };
 
@@ -136,10 +137,16 @@ private:
 
 class BasicGreedyAgent : public KBanditsAgent{
 public:
-	BasicGreedyAgent(std::size_t bandits, double epsilon);
+	BasicGreedyAgent(std::size_t bandits, double epsilon, double initial_estimate = std::numeric_limits<double>::infinity());
 	virtual std::size_t get_selection() const override;
 	virtual std::size_t get_best_bandit() const override;
 	virtual void add_reward(std::size_t selection, double reward) override;
+protected:
+	/// <summary>
+	/// Determine the step value for the next reward calculation
+	/// </summary>
+	/// <returns></returns>
+	virtual double step_value() const;
 private:
 	/// <summary>
 	/// Returns true if the next selection should be the greedy one
@@ -153,7 +160,7 @@ private:
 	mutable std::uniform_int_distribution<std::size_t> m_bandit_distribution;
 	mutable std::bernoulli_distribution m_greedy_option_distribution;
 
-	std::vector<std::vector<double>> m_rewards;
+	unsigned int m_steps;
 	std::vector<double> m_expected_rewards;
 };
 

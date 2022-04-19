@@ -4,9 +4,36 @@
 #include <numeric>
 #include <algorithm>
 
-KBandits::KBandits(double reward_mean, double reward_variance, double bandit_variance, std::size_t bandits): m_best_bandit(-1) {
+std::default_random_engine create_random_engine(std::default_random_engine::result_type seed) {
+	// Determine seed
+	using Engine = std::default_random_engine;
+	Engine engine;
+	if (seed == std::numeric_limits<typename Engine::result_type>::max()) {
+		// Create a new seed
+		std::random_device dev;
+		engine.seed(dev());
+	}
+	else {
+		// Use given seed
+		engine.seed(seed);
+	}
+
+	return engine;
+}
+
+
+Bandit::Bandit(double reward, double variance, typename Engine::result_type seed)
+	: m_reward(reward), m_variance(variance), m_distribution(reward, variance), m_generator(create_random_engine(seed)) {
+}
+
+KBandits::KBandits(double reward_mean, 
+	double reward_variance, 
+	double bandit_variance, 
+	std::size_t bandits, 
+	Engine::result_type seed): m_best_bandit(-1) {
+		
 	// Create distribution for rewards
-	std::default_random_engine engine;
+	std::default_random_engine engine{create_random_engine(seed)};
 	std::normal_distribution distribution(reward_mean, std::sqrt(reward_variance));
 	double best_reward = -std::numeric_limits<double>::infinity();
 
@@ -26,7 +53,7 @@ double KBandits::get_reward(std::size_t k) {
 	return m_bandits[k]();
 }
 
-Bandit<>& KBandits::get_bandit(std::size_t k) {
+Bandit& KBandits::get_bandit(std::size_t k) {
 	return m_bandits[k];
 }
 
@@ -46,9 +73,9 @@ std::size_t KBanditsAgent::total_bandits() const {
 }
 
 
-BasicGreedyAgent::BasicGreedyAgent(std::size_t bandits, double epsilon): 
+BasicGreedyAgent::BasicGreedyAgent(std::size_t bandits, double epsilon, double initial_estimate): 
 	KBanditsAgent(bandits), m_epsilon(epsilon), m_bandit_distribution(0, bandits-1), m_greedy_option_distribution(1-epsilon),
-	m_rewards(bandits), m_expected_rewards(bandits, std::numeric_limits<double>::infinity())
+	m_steps{0}, m_expected_rewards(bandits, initial_estimate)
 {
 }
 
@@ -68,10 +95,17 @@ std::size_t BasicGreedyAgent::get_best_bandit() const {
 }
 
 void BasicGreedyAgent::add_reward(std::size_t selection, double reward) {
-	// Push and update expected rewards
-	m_rewards[selection].push_back(reward);
-	m_expected_rewards[selection] = std::reduce(m_rewards[selection].cbegin(), m_rewards[selection].cend(), 0.0) / m_rewards[selection].size();
+	m_steps += 1;
+
+	// Calculate the new expected reward
+	double expected_reward = m_expected_rewards[selection];
+	m_expected_rewards[selection] = expected_reward + step_value() * (reward - expected_reward);
 }
+
+double BasicGreedyAgent::step_value() const {
+	return 1.0 / m_steps;
+}
+
 
 bool BasicGreedyAgent::do_greedy() const{
 	return m_greedy_option_distribution(m_engine);

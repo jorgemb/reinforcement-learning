@@ -39,7 +39,7 @@ FROM jupyter/base-notebook:latest as notebook
 # Plotting: xplot https://github.com/QuantStack/xplot
 # Plotting: matplotlib-cpp https://github.com/lava/matplotlib-cpp
 
-RUN mamba install -c conda-forge xeus-cling xtensor -y
+RUN mamba install -c conda-forge fmt xeus-cling xtensor -y
 
 # Copy build information
 COPY --from=build --chown=jovyan:users /app/build/install /rl/

@@ -13,6 +13,8 @@ set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install/)
 
 # Add dependencies
 find_package(Catch2 REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+find_package(xtl REQUIRED)
 find_package(xtensor REQUIRED)
 
 # Testing library
@@ -22,4 +24,3 @@ include(Catch)
 
 # Add other projects
 add_subdirectory(kbandit/)
-

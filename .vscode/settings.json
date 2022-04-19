@@ -1,3 +1,4 @@
 {
-    "cmake.configureOnEdit": false
+    "cmake.configureOnEdit": false,
+    "jupyter.jupyterServerType": "remote"
 }
