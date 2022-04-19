@@ -1,0 +1,9 @@
+version: "3.8"
+
+services:
+  notebook:
+    image: rl-notebook:latest
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./work/:/home/jovyan/work

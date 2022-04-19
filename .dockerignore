@@ -1,0 +1,9 @@
+build/
+out/
+.git/
+.vs/
+.vscode/
+notebook/
+vcpkg/downloads/
+vcpkg/packages/
+vcpkg/buildtrees/

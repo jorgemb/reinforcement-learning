@@ -1,0 +1,1 @@
+docker build -f notebook/Dockerfile -t rl-notebook:latest .

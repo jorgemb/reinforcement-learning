@@ -8,6 +8,9 @@ project ("reinforcement-learning")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
+# Install prefix
+set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install/)
+
 # Add dependencies
 find_package(Catch2 REQUIRED)
 
