@@ -1,5 +1,5 @@
 {
   "name": "reinforcement-learning",
   "version": "1.0.0",
-  "dependencies": ["catch2"]
+  "dependencies": ["catch2", "xtensor"]
 }

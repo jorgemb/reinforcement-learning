@@ -1,5 +1,5 @@
 # ---------------- BUILDING --------------------
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as build
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
@@ -32,10 +32,15 @@ RUN cmake .. && cmake --build . -j8 && cmake --install .
 
 # ---------------- JUPYTER --------------------
 
-FROM jupyter/base-notebook:latest
+FROM jupyter/base-notebook:latest as notebook
 
-RUN mamba install -c conda-forge xeus-cling -y
+# References
+# Vectors: xtensor 
+# Plotting: xplot https://github.com/QuantStack/xplot
+# Plotting: matplotlib-cpp https://github.com/lava/matplotlib-cpp
+
+RUN mamba install -c conda-forge xeus-cling xtensor -y
 
 # Copy build information
-COPY --from=0 --chown=jovyan:users /app/build/install /rl/
+COPY --from=build --chown=jovyan:users /app/build/install /rl/
 ENTRYPOINT [ "start.sh", "jupyter", "notebook", "--NotebookApp.token", "''"]

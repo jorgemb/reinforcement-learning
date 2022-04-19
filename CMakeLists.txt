@@ -13,6 +13,7 @@ set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install/)
 
 # Add dependencies
 find_package(Catch2 REQUIRED)
+find_package(xtensor REQUIRED)
 
 # Testing library
 set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)

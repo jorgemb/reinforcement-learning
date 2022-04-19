@@ -4,7 +4,14 @@ project ("k-armed-bandit")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
-add_library(kbandit SHARED "k-bandit.cpp")
+# LIBKBANDIT
+set(LIBKBANDIT_SOURCES "k-bandit.cpp")
+IF(WIN32)
+  add_library(kbandit STATIC ${LIBKBANDIT_SOURCES})
+else()
+  add_library(kbandit SHARED ${LIBKBANDIT_SOURCES})
+endif()
+
 target_include_directories(kbandit PUBLIC "include")
 set_target_properties(kbandit PROPERTIES
   PUBLIC_HEADER "include/kbandit/k-bandit.h"
