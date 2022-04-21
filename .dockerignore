@@ -1,9 +1,12 @@
 build/
 out/
+cmake-build*/
 .git/
 .vs/
 .vscode/
+.idea/
 notebook/
 vcpkg/downloads/
 vcpkg/packages/
 vcpkg/buildtrees/
+Dockerfile
