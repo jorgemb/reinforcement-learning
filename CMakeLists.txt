@@ -9,13 +9,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # Install prefix
-set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install/)
+#set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install/ CACHE)
 
 # Add dependencies
-find_package(Catch2 REQUIRED)
+find_package(Catch2 CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
-find_package(xtl REQUIRED)
-find_package(xtensor REQUIRED)
+find_package(xtl CONFIG REQUIRED)
+find_package(xtensor CONFIG REQUIRED)
 
 # Testing library
 set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)

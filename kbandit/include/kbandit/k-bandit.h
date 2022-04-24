@@ -25,26 +25,20 @@ public:
 	/// Returns a random value from the Bandit distribution
 	/// </summary>
 	/// <returns></returns>
-	double operator()() {
-		return m_distribution(m_generator);
-	}
+	double operator()();
 
 
 	/// <summary>
 	/// Returns the average of the Bandit
 	/// </summary>
 	/// <returns></returns>
-	double mean_reward() const noexcept {
-		return m_reward;
-	}
+	double mean_reward() const noexcept;
 
 	/// <summary>
 	/// Returns the variance of the Bandit
 	/// </summary>
 	/// <returns></returns>
-	double variance() const noexcept{
-		return m_variance;
-	}
+	double variance() const noexcept;
 
 private:
 	double m_reward, m_variance;
@@ -146,7 +140,7 @@ protected:
 	/// Determine the step value for the next reward calculation
 	/// </summary>
 	/// <returns></returns>
-	virtual double step_value() const;
+	virtual double step_value(unsigned int steps_for_selection) const;
 private:
 	/// <summary>
 	/// Returns true if the next selection should be the greedy one
@@ -154,13 +148,11 @@ private:
 	/// <returns></returns>
 	bool do_greedy() const;
 
-	double m_epsilon;
-
 	mutable std::default_random_engine m_engine;
 	mutable std::uniform_int_distribution<std::size_t> m_bandit_distribution;
 	mutable std::bernoulli_distribution m_greedy_option_distribution;
 
-	unsigned int m_steps;
+    std::vector<unsigned int> m_steps_per_bandit;
 	std::vector<double> m_expected_rewards;
 };
 

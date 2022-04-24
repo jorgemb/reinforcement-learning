@@ -17,7 +17,6 @@ set_target_properties(kbandit PROPERTIES
   PUBLIC_HEADER "include/kbandit/k-bandit.h"
 )
 
-
 # Run bandits
 add_executable(run-kbandits "run-kbandit.cpp")
 target_link_libraries(run-kbandits PRIVATE kbandit fmt::fmt)
