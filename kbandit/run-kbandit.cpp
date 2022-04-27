@@ -67,8 +67,8 @@ int main() {
 
     // Initial values
     const double reward_mean = 0.0, reward_variance = 1.0, bandit_variance = 1.0;
-	const unsigned int tests = 2000, episodes = 200;
-	const unsigned int n_bandits = 10;
+	const unsigned int tests = 20000, episodes = 200;
+	const unsigned int n_bandits = 20;
     const double initial_agent_estimate = 0.0;
 
     // KBandits creator

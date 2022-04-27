@@ -32,6 +32,10 @@ target_link_libraries(run-kbandits PRIVATE kbandit fmt::fmt sciplot::sciplot)
 
 if (MSVC) 
   target_link_options(run-kbandits PRIVATE $<$<CONFIG:DEBUG>:/PROFILE>)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -pg")
 endif()
 
 # Tests
