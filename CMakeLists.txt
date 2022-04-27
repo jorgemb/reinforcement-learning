@@ -16,20 +16,7 @@ find_package(Catch2 CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(xtl CONFIG REQUIRED)
 find_package(xtensor CONFIG REQUIRED)
-
-# .. matplotlib
-find_path(MATPLOTLIB_CPP_INCLUDE_DIRS "matplotlibcpp.h")
-add_library(matplotlib INTERFACE)
-target_include_directories(matplotlib INTERFACE
-        ${MATPLOTLIB_CPP_INCLUDE_DIRS}
-    )
-set_target_properties(matplotlib PROPERTIES
-        PUBLIC_HEADER ${MATPLOTLIB_CPP_INCLUDE_DIRS}/matplotlibcpp.h
-        )
-install(
-    TARGETS matplotlib
-    PUBLIC_HEADER DESTINATION include
-)
+find_package(sciplot CONFIG REQUIRED)
 
 # Testing library
 set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)

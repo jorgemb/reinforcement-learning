@@ -5,28 +5,37 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # LIBKBANDIT
-set(LIBKBANDIT_SOURCES "k-bandit.cpp")
+set(LIBKBANDIT_SOURCES
+        "src/k-bandit.cpp"
+        "src/k-bandit-agent.cpp"
+)
+set(LIBKBANDIT_HEADERS
+  "include/kbandit/k-bandit.h"
+  "include/kbandit/k-bandit-agent.h"
+)
+
+
 IF(WIN32)
-  add_library(kbandit STATIC ${LIBKBANDIT_SOURCES})
+add_library(kbandit STATIC ${LIBKBANDIT_SOURCES})
 else()
   add_library(kbandit SHARED ${LIBKBANDIT_SOURCES})
 endif()
 
 target_include_directories(kbandit PUBLIC "include")
 set_target_properties(kbandit PROPERTIES
-  PUBLIC_HEADER "include/kbandit/k-bandit.h"
+  PUBLIC_HEADER "${LIBKBANDIT_HEADERS}"
 )
 
 # Run bandits
 add_executable(run-kbandits "run-kbandit.cpp")
-target_link_libraries(run-kbandits PRIVATE kbandit fmt::fmt matplotlib)
+target_link_libraries(run-kbandits PRIVATE kbandit fmt::fmt sciplot::sciplot)
 
 if (MSVC) 
   target_link_options(run-kbandits PRIVATE $<$<CONFIG:DEBUG>:/PROFILE>)
 endif()
 
 # Tests
-add_executable(test-kbandit "test-kbandit.cpp")
+add_executable(test-kbandit "tests/test-kbandit.cpp")
 target_link_libraries(test-kbandit PRIVATE kbandit Catch2::Catch2)
 catch_discover_tests(test-kbandit)
 

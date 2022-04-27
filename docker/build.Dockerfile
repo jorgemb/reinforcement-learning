@@ -35,7 +35,9 @@ COPY . .
 
 # Build and install
 WORKDIR /build/
-ARG CC=/usr/bin/clang
-ARG CXX=/usr/bin/clang++
-# RUN cmake -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja .. && cmake --build . && cmake --install .
+
+# Select clang as compiler
+#ARG CC=/usr/bin/clang
+#ARG CXX=/usr/bin/clang++
+
 CMD cmake -DCMAKE_INSTALL_PREFIX=/install/ /app/ && cmake --build . -j8 && cmake --install .
