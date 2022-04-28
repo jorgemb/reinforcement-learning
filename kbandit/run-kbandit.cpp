@@ -6,6 +6,7 @@
 #include <numeric>
 #include <functional>
 #include <algorithm>
+#include <execution>
 
 #include <fmt/core.h>
 #include <fmt/format.h>
@@ -41,7 +42,7 @@ std::vector<double> test_agent_episodes(const std::function<std::unique_ptr<KBan
     return accumulator;
 }
 
-std::vector<double> running_average(const std::vector<double>& values, std::size_t window_size = 100){
+std::vector<double>& running_average(std::vector<double>& values, std::size_t window_size = 100){
 //    const std::size_t steps = values.size() - window_size + 1;
 //    std::vector<double> results(steps);
 //
@@ -52,14 +53,24 @@ std::vector<double> running_average(const std::vector<double>& values, std::size
 //        values_iter = std::next(values_iter);
 //    }
 
-    std::vector<double> results(values.size(), 0.);
-    auto values_iter = values.cbegin();
-    for(auto iter=results.begin(); iter != results.end(); ++iter){
-        *iter = std::reduce(values.begin(), values_iter) / std::distance(values.begin(), values_iter);
-        values_iter = std::next(values_iter);
-    }
+//    std::vector<double> results(values.size(), 0.);
+//    auto values_iter = values.cbegin();
+//    for(auto iter=results.begin(); iter != results.end(); ++iter){
+//        *iter = std::reduce(values.begin(), values_iter) / static_cast<double>(std::distance(values.begin(), values_iter));
+//        values_iter = std::next(values_iter);
+//    }
+//
+//    return results;
 
-    return results;
+    std::partial_sum(values.begin(), values.end(), values.begin());
+    double count = 1.;
+    std::transform(std::execution::seq, values.begin(), values.end(), values.begin(), [&count](auto val){
+        double result = val / count;
+        count += 1.;
+        return result;
+    });
+
+    return values;
 }
 
 int main() {
@@ -67,7 +78,7 @@ int main() {
 
     // Initial values
     const double reward_mean = 0.0, reward_variance = 1.0, bandit_variance = 1.0;
-	const unsigned int tests = 20000, episodes = 200;
+	const unsigned int tests = 2000, episodes = 200;
 	const unsigned int n_bandits = 20;
     const double initial_agent_estimate = 0.0;
 
