@@ -19,6 +19,9 @@ IF(WIN32)
 add_library(kbandit STATIC ${LIBKBANDIT_SOURCES})
 else()
   add_library(kbandit SHARED ${LIBKBANDIT_SOURCES})
+
+  # Add libraries for parallel tasks
+  target_link_libraries(kbandit PUBLIC tbb)
 endif()
 
 target_include_directories(kbandit PUBLIC "include")

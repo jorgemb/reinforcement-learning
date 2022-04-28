@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.16)
+﻿cmake_minimum_required (VERSION 3.16)
 
 # Add vcpkg 
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
@@ -17,6 +17,10 @@ find_package(fmt CONFIG REQUIRED)
 find_package(xtl CONFIG REQUIRED)
 find_package(xtensor CONFIG REQUIRED)
 find_package(sciplot CONFIG REQUIRED)
+
+if(NOT WIN32)
+  find_package(TBB REQUIRED)
+endif()
 
 # Testing library
 set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)
