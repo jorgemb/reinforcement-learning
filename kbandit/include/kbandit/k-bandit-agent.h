@@ -63,7 +63,7 @@ protected:
 	/// </summary>
 	/// <returns></returns>
 	virtual double step_value(unsigned int steps_for_selection) const;
-private:
+
 	/// <summary>
 	/// Returns true if the next selection should be the greedy one
 	/// </summary>
@@ -71,11 +71,21 @@ private:
 	bool do_greedy() const;
 
 	mutable RandomEngine m_engine;
-	mutable std::uniform_int_distribution<size_t> m_bandit_distribution;
+	mutable std::uniform_int_distribution<std::size_t> m_bandit_distribution;
 	mutable std::bernoulli_distribution m_greedy_option_distribution;
 
     std::vector<unsigned int> m_steps_per_bandit;
 	std::vector<double> m_expected_rewards;
+};
+
+class UCBAgent: public BasicGreedyAgent{
+public:
+    UCBAgent(std::size_t bandits, double confidence, double initial_estimate = 0.);
+
+    size_t get_selection() const override;
+
+protected:
+    double m_confidence;
 };
 
 #endif //REINFORCEMENT_LEARNING_K_BANDIT_AGENT_H

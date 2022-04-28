@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <numeric>
 #include <random>
-#include "kbandit/k-bandit.h"
+#include <execution>
 #include "kbandit/k-bandit-agent.h"
 
 KBanditsAgent::KBanditsAgent(size_t total_bandits): m_total_bandits(total_bandits) {
@@ -55,4 +55,22 @@ double BasicGreedyAgent::step_value(unsigned int steps_for_bandit) const {
 
 bool BasicGreedyAgent::do_greedy() const{
 	return m_greedy_option_distribution(m_engine);
+}
+
+UCBAgent::UCBAgent(std::size_t bandits, double confidence, double initial_estimate) : BasicGreedyAgent(bandits, 0., initial_estimate, 0),
+m_confidence(confidence){
+
+}
+
+size_t UCBAgent::get_selection() const {
+    std::vector<double> ucb(m_expected_rewards.begin(), m_expected_rewards.end());
+
+    std::size_t total_steps = std::reduce( m_steps_per_bandit.begin(), m_steps_per_bandit.end(), 0u);
+    std::transform(ucb.begin(), ucb.end(), m_steps_per_bandit.begin(), ucb.begin(),
+                   [this, total_steps](auto expected, auto steps){
+        return expected + m_confidence * std::sqrt( std::log(total_steps) / steps );
+    });
+
+    auto argmax = std::max_element(ucb.begin(), ucb.end());
+    return std::distance(ucb.begin(), argmax);
 }

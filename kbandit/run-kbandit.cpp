@@ -79,7 +79,7 @@ int main() {
     // Initial values
     const double reward_mean = 0.0, reward_variance = 1.0, bandit_variance = 1.0;
 	const unsigned int tests = 2000, episodes = 200;
-	const unsigned int n_bandits = 20;
+	const unsigned int n_bandits = 10;
     const double initial_agent_estimate = 0.0;
 
     // KBandits creator
@@ -98,6 +98,7 @@ int main() {
 
 	// Greedy
     fmt::print("Greedy agent\n");
+    seed = 0;
     auto greedy_agent_results = test_agent_episodes(bandits_generator, [=](){
         return std::unique_ptr<KBanditsAgent>( new BasicGreedyAgent(n_bandits, 0.0, initial_agent_estimate) );
     }, tests, episodes);
@@ -105,6 +106,7 @@ int main() {
 
 	// e-0.1
     fmt::print("e-0.1 agent\n");
+    seed = 0;
     auto e01_agent_results = test_agent_episodes(bandits_generator, [=](){
         return std::unique_ptr<KBanditsAgent>( new BasicGreedyAgent(n_bandits, 0.1, initial_agent_estimate));
     }, tests, episodes);
@@ -112,10 +114,26 @@ int main() {
 
 	// e-0.01
     fmt::print("e-0.01 agent\n");
+    seed = 0;
     auto e001_agent_results = test_agent_episodes(bandits_generator, [=](){
         return std::unique_ptr<KBanditsAgent>( new BasicGreedyAgent(n_bandits, 0.01, initial_agent_estimate));
     }, tests, episodes);
     plot.drawCurve(time_x, running_average(e001_agent_results)).label("e0.01 agent");
+
+    // ucb
+    fmt::print("UCB agent (0.9)\n");
+    seed = 0;
+    auto ucb9_agent_results = test_agent_episodes(bandits_generator, [=](){
+        return std::unique_ptr<KBanditsAgent>(new UCBAgent(n_bandits, 0.9, initial_agent_estimate));
+    }, tests, episodes);
+    plot.drawCurve(time_x, running_average(ucb9_agent_results)).label("UCB agent .9");
+
+    fmt::print("UCB agent (0.1)\n");
+    seed = 0;
+    auto ucb1_agent_results = test_agent_episodes(bandits_generator, [=](){
+        return std::unique_ptr<KBanditsAgent>(new UCBAgent(n_bandits, 0.1, initial_agent_estimate));
+    }, tests, episodes);
+    plot.drawCurve(time_x, running_average(ucb1_agent_results)).label("UCB agent .1");
 
     plot.show();
 }
