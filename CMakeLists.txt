@@ -17,6 +17,7 @@ find_package(fmt CONFIG REQUIRED)
 find_package(xtl CONFIG REQUIRED)
 find_package(xtensor CONFIG REQUIRED)
 find_package(sciplot CONFIG REQUIRED)
+find_package(Boost REQUIRED COMPONENTS graph)
 
 if(NOT WIN32)
   find_package(TBB REQUIRED)
