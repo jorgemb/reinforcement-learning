@@ -2,11 +2,9 @@
 #include "kbandit/k-bandit-agent.h"
 
 #include <iostream>
-#include <string>
 #include <numeric>
 #include <functional>
 #include <algorithm>
-#include <execution>
 
 #include <fmt/core.h>
 #include <fmt/format.h>
@@ -64,7 +62,7 @@ std::vector<double>& running_average(std::vector<double>& values, std::size_t wi
 
     std::partial_sum(values.begin(), values.end(), values.begin());
     double count = 1.;
-    std::transform(std::execution::seq, values.begin(), values.end(), values.begin(), [&count](auto val){
+    std::transform(values.begin(), values.end(), values.begin(), [&count](auto val){
         double result = val / count;
         count += 1.;
         return result;
