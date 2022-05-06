@@ -30,3 +30,4 @@ include(Catch)
 
 # Add other projects
 add_subdirectory(kbandit/)
+add_subdirectory(mdp/)
