@@ -6,4 +6,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # Run MDP tests
 add_executable("run-mdp" run_mdp.cpp)
-target_link_libraries("run-mdp" PRIVATE Boost::graph)
+target_link_libraries("run-mdp" PRIVATE fmt::fmt Boost::graph)
