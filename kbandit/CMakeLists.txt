@@ -30,6 +30,7 @@ set_target_properties(kbandit PROPERTIES
 add_executable(run-kbandits "run-kbandit.cpp")
 target_link_libraries(run-kbandits PRIVATE kbandit fmt::fmt sciplot::sciplot)
 
+# .. add profiling information
 if (MSVC) 
   target_link_options(run-kbandits PRIVATE $<$<CONFIG:DEBUG>:/PROFILE>)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

@@ -4,8 +4,10 @@
 
 #include "../include/mdp/gridworld.h"
 
-#include <algorithm>
+#include <numeric>
 #include <stdexcept>
+
+using namespace rl::mdp;
 
 Gridworld::Gridworld(size_t rows, size_t columns, RandomEngine::result_type seed) : m_rows(rows), m_columns(columns),
 m_random_engine(seed){
@@ -62,6 +64,8 @@ Gridworld::transition_default(const Gridworld::State &state, const Gridworld::Ac
                     State{ state.row >= m_rows ? m_rows-1 : state.row+1, state.column},
                     0.0};
     }
+
+    throw std::logic_error("Invalid action selected");
 }
 
 Gridworld::Transition
@@ -99,4 +103,29 @@ void Gridworld::add_transition(const Gridworld::State &state, const Gridworld::A
     TransitionProbability transition_probability{transition, probability};
 
     m_dynamics.emplace(state_action, transition_probability);
+}
+
+std::ostream &operator<<(std::ostream &os, const Gridworld::Action& action) {
+    using Action = Gridworld::Action;
+    switch (action) {
+        case Action::LEFT:
+            os << "LEFT";
+            break;
+        case Action::RIGHT:
+            os << "RIGHT";
+            break;
+        case Action::UP:
+            os << "UP";
+            break;
+        case Action::DOWN:
+            os << "DOWN";
+            break;
+    }
+
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const Gridworld::State& state) {
+    os << "(" << state.row << "," << state.column << ")";
+    return os;
 }

@@ -9,6 +9,7 @@
 #include <limits>
 
 using namespace Catch::literals;
+using rl::mdp::Gridworld;
 
 TEST_CASE("Basic gridworld", "[gridworld]"){
     size_t rows = 5, columns = 5;

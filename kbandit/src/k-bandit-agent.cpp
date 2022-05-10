@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <numeric>
 #include <random>
-#include <execution>
 #include "kbandit/k-bandit-agent.h"
 
 KBanditsAgent::KBanditsAgent(size_t total_bandits): m_total_bandits(total_bandits) {
