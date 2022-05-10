@@ -5,6 +5,7 @@
 #include "../include/mdp/gridworld.h"
 
 #include <numeric>
+#include <algorithm>
 #include <stdexcept>
 
 using namespace rl::mdp;
@@ -36,8 +37,8 @@ Gridworld::Transition Gridworld::get_transition(const Gridworld::State &state, c
     // Deterministic case
     if (number_transitions == 1){
         auto element_iter = m_dynamics.find(stateAction);
-        auto [transition, probability] = element_iter->second;
-        return transition;
+        auto [state, reward, probability] = element_iter->second;
+        return Transition {state, reward};
     }
 
     // Non-deterministic case
@@ -74,8 +75,8 @@ Gridworld::transition_non_deterministic(const Gridworld::State &state, const Gri
     auto [start_iter, end_iter] = m_dynamics.equal_range(StateAction{state, action});
     Probability total_probability = std::accumulate(start_iter, end_iter, 0.0,
                                                     [](const auto& value, const auto& prob){
-        TransitionProbability transition_prob{prob.second};
-        return value + transition_prob.second;
+        StateRewardProbability transition_prob{prob.second};
+        return value + srp_probability(transition_prob);
     });
 
     // Calculate probability distribution
@@ -85,11 +86,11 @@ Gridworld::transition_non_deterministic(const Gridworld::State &state, const Gri
     // Select one of the actions
     Probability current_value = 0.0;
     for(auto iter=start_iter; iter != end_iter; ++iter){
-        TransitionProbability transition_probability = iter->second;
-        current_value += transition_probability.second;
+        StateRewardProbability transition_probability = iter->second;
+        current_value += srp_probability(transition_probability);
 
         if(random_value <= current_value)
-            return transition_probability.first;
+            return srp_transition(transition_probability);
     }
 
     throw std::logic_error("Non-deterministic transition error");
@@ -99,10 +100,36 @@ void Gridworld::add_transition(const Gridworld::State &state, const Gridworld::A
                                const Gridworld::State &new_state, const Gridworld::Reward &reward,
                                const Gridworld::Probability &probability) {
     StateAction state_action{state, action};
-    Transition transition{new_state, reward};
-    TransitionProbability transition_probability{transition, probability};
+    StateRewardProbability transition_probability{new_state, reward, probability};
 
     m_dynamics.emplace(state_action, transition_probability);
+}
+
+double Gridworld::expected_reward(const GridworldState &state, const GridworldAction &action) const {
+    StateAction state_action{state, action};
+    auto transition_count = m_dynamics.count(state_action);
+
+    // Default reward
+    if(transition_count == 0){
+        return 0.0;
+    }
+
+    // Deterministic
+    if(transition_count == 1){
+        auto transition = m_dynamics.find(state_action);
+        return srp_reward(transition->second);
+    }
+
+    // Non-deterministic
+    Reward total_probability{};
+    auto [start_iter, end_iter] = m_dynamics.equal_range(StateAction{state, action});
+    Reward expected_reward = std::accumulate(start_iter, end_iter, 0.0,
+                    [&total_probability](const auto& value, const auto& iter_value){
+                        total_probability += srp_probability(iter_value.second);
+        return value + srp_probability(iter_value.second) * srp_reward(iter_value.second);
+    });
+
+    return expected_reward / total_probability;
 }
 
 std::ostream &operator<<(std::ostream &os, const Gridworld::Action& action) {

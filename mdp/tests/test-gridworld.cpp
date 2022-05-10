@@ -49,10 +49,10 @@ TEST_CASE("Basic gridworld", "[gridworld]"){
 
     SECTION("Deterministic transitions") {
         // Everything from 0,1 leads to 4,1 and +10 reward
-        g.add_transition(State{0, 1}, Action::LEFT, State{4, 1}, 10.);
-        g.add_transition(State{0, 1}, Action::RIGHT, State{4, 1}, 10.);
-        g.add_transition(State{0, 1}, Action::UP, State{4, 1}, 10.);
-        g.add_transition(State{0, 1}, Action::DOWN, State{4, 1}, 10.);
+        g.add_transition(State{0, 1}, Action::LEFT, State{4, 1}, 10., 1.0);
+        g.add_transition(State{0, 1}, Action::RIGHT, State{4, 1}, 10., 1.0);
+        g.add_transition(State{0, 1}, Action::UP, State{4, 1}, 10., 1.0);
+        g.add_transition(State{0, 1}, Action::DOWN, State{4, 1}, 10., 1.0);
         for (auto action: available_actions) {
             DYNAMIC_SECTION("Check transitions (0,1) -> (4,1) :: " << action) {
                 auto transition = g.get_transition(State{0, 1}, action);
@@ -85,5 +85,21 @@ TEST_CASE("Basic gridworld", "[gridworld]"){
 
         REQUIRE(static_cast<double>(times_A) / total_tests == Approx(0.5).margin(0.01));
         REQUIRE(static_cast<double>(times_B) / total_tests == Approx(0.5).margin(0.01));
+    }
+
+    SECTION("MDP values"){
+        SECTION("Expected reward") {
+            // Expected reward for default transition
+            REQUIRE(g.expected_reward(State{0, 0}, Action::LEFT) == 0.0_a);
+
+            // Expected reward for added transition
+            g.add_transition(State{0, 0}, Action::LEFT, State{1,1}, 10., 1.0);
+            REQUIRE(g.expected_reward(State{0, 0}, Action::LEFT) == 10.0_a);
+
+            // Expected reward for non-deterministic transition
+            g.add_transition(State{0, 0}, Action::LEFT, State{2, 2}, 100, 3.0);
+            double expected = (10.0 * 0.25) + (100.0 * 0.75);
+            REQUIRE(g.expected_reward(State{0, 0}, Action::LEFT) == Approx(expected));
+        }
     }
 }

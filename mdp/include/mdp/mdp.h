@@ -1,19 +1,70 @@
-//
-// Created by jorge on 10/05/2022.
-//
-
 #ifndef REINFORCEMENT_LEARNING_MDP_H
 #define REINFORCEMENT_LEARNING_MDP_H
+
+#include <tuple>
 
 namespace rl::mdp{
     template <class TState, class TAction, class TReward=double, class TProbability=double>
     class MDP{
     public:
-        // Type definitions
-        using State = TState;
-        using Action = TAction;
-        using Reward = TReward;
-        using Probability = TProbability;
+        // Basic definitions
+        typedef TState State;
+        typedef TAction Action;
+        typedef TReward Reward;
+        typedef TProbability Probability;
+
+        // Complex definitions
+        typedef std::pair<State, Action> StateAction;
+        typedef std::pair<State, Reward> Transition;
+        typedef std::tuple<State, Reward, Probability> StateRewardProbability;
+
+        // Virtual destructor
+        virtual ~MDP() {}
+
+        // MDP functionality
+
+        /// Returns a transition from a State-Action pair
+        /// \param state
+        /// \param action
+        /// \return
+        [[nodiscard]]
+        virtual Transition get_transition(const State& state, const Action& action) const = 0;
+
+        /// Adds a transition with the given probability
+        /// \param state
+        /// \param action
+        /// \param new_state
+        /// \param reward
+        /// \param probability
+        virtual void add_transition(const State& state,
+                                    const Action& action,
+                                    const State& new_state,
+                                    const Reward& reward,
+                                    const Probability& probability) = 0;
+
+        /// Calculates the expected reward of a given State-Action pair
+        /// \param state
+        /// \param action
+        /// \return
+        virtual Reward expected_reward(const State& state, const Action& action) const = 0;
+
+    protected:
+        // Useful methods
+        static State srp_state(const StateRewardProbability& srp){
+            return std::get<0>(srp);
+        }
+
+        static Reward srp_reward(const StateRewardProbability& srp){
+            return std::get<1>(srp);
+        }
+
+        static Probability srp_probability(const StateRewardProbability& srp){
+            return std::get<2>(srp);
+        }
+
+        static Transition srp_transition(const StateRewardProbability& srp){
+            return Transition{srp_state(srp), srp_reward(srp)};
+        }
     };
 }
 

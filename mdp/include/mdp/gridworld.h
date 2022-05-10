@@ -14,34 +14,27 @@
 #include <ostream>
 
 namespace rl::mdp {
+    enum class GridworldAction {
+        LEFT,
+        RIGHT,
+        UP,
+        DOWN
+    };
 
-    class Gridworld {
+    /// Class for representing the current state in Gridworld
+    class GridworldState {
     public:
-        enum class Action {
-            LEFT,
-            RIGHT,
-            UP,
-            DOWN
-        };
+        size_t row, column;
 
-        /// Class for representing the current state in Gridworld
-        class State {
-        public:
-            size_t row, column;
+        auto operator<(const GridworldState &other) const {
+            return std::make_pair(row, column) < std::make_pair(other.row, other.column);
+        }
 
-            auto operator<(const State &other) const {
-                return std::make_pair(row, column) < std::make_pair(other.row, other.column);
-            }
+        auto operator==(const GridworldState &other) const { return row == other.row && column == other.column; }
+    };
 
-            auto operator==(const State &other) const { return row == other.row && column == other.column; }
-        };
-
-        using Reward = double;
-        using Probability = double;
-
-        using StateAction = std::pair<State, Action>;
-        using Transition = std::pair<State, Reward>;
-        using TransitionProbability = std::pair<Transition, Probability>;
+    class Gridworld: public MDP<GridworldState, GridworldAction> {
+    public:
         using RandomEngine = std::default_random_engine;
 
         /// Creates a new Gridworld with the given amount of rows and columns
@@ -65,7 +58,7 @@ namespace rl::mdp {
         /// \param state_action
         /// \return
         [[nodiscard]]
-        Transition get_transition(const State &state, const Action &action) const;
+        Transition get_transition(const State &state, const Action &action) const override;
 
         /// Adds a transition with the given probability
         /// \param state
@@ -73,11 +66,20 @@ namespace rl::mdp {
         /// \param new_state
         /// \param reward
         /// \param probability
-        void add_transition(const State &state, const Action &action, const State &new_state, const Reward &reward,
-                            const Probability &probability = 1.0);
+        void add_transition(const State &state,
+                            const Action &action,
+                            const State &new_state,
+                            const Reward &reward,
+                            const Probability &probability) override;
+
+        /// Returns the expected reward of the State-Action pair
+        /// \param state
+        /// \param action
+        /// \return
+        double expected_reward(const State &state, const Action &action) const override;
 
     private:
-        using DynamicsMap = std::multimap<StateAction, TransitionProbability>;
+        using DynamicsMap = std::multimap<StateAction, StateRewardProbability>;
         DynamicsMap m_dynamics;
         size_t m_rows, m_columns;
         mutable RandomEngine m_random_engine;
