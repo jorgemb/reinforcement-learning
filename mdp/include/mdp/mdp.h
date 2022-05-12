@@ -8,15 +8,15 @@ namespace rl::mdp{
     class MDP{
     public:
         // Basic definitions
-        typedef TState State;
-        typedef TAction Action;
-        typedef TReward Reward;
-        typedef TProbability Probability;
+        using State = TState;
+        using Action = TAction;
+        using Reward = TReward;
+        using Probability = TProbability;
 
         // Complex definitions
-        typedef std::pair<State, Action> StateAction;
-        typedef std::pair<State, Reward> Transition;
-        typedef std::tuple<State, Reward, Probability> StateRewardProbability;
+        using StateAction = std::pair<State, Action>;
+        using Transition = std::pair<State, Reward>;
+        using StateRewardProbability = std::tuple<State, Reward, Probability>;
 
         // Virtual destructor
         virtual ~MDP() = default;
@@ -57,8 +57,17 @@ namespace rl::mdp{
                                                          const Action& action,
                                                          const State& to_state) const = 0;
 
+        /// Returns a vector with all the possible states that the MDP can contain.
+        /// \return
+        virtual std::vector<State> get_states() const = 0;
+
+        /// Returns a list with the available actions for a given state.
+        /// \param state
+        /// \return
+        virtual std::vector<Action> get_actions(const State& state) const = 0;
+
     protected:
-        // Useful methods
+        // Useful methods for extracting data from StateRewardProbability
         static State srp_state(const StateRewardProbability& srp){
             return std::get<0>(srp);
         }
@@ -75,6 +84,26 @@ namespace rl::mdp{
             return Transition{srp_state(srp), srp_reward(srp)};
         }
     };
-}
+
+
+    /// Defines an agent to traverse an MDP
+    /// \tparam TState
+    /// \tparam TAction
+    /// \tparam TReward
+    /// \tparam TProbability
+    template <class TState, class TAction, class TReward=double, class TProbability=double>
+    class MDPAgent{
+    public:
+        /// Returns the next action to take based on the internal information
+        /// \return
+        virtual TAction next_action() = 0;
+
+        /// Adds the result of a transition from an action
+        /// \param new_state
+        /// \param reward
+        virtual void add_transition_result(const TState& new_state, const TReward& reward) = 0;
+    };
+
+} // namespace rl::mdp
 
 #endif //REINFORCEMENT_LEARNING_MDP_H

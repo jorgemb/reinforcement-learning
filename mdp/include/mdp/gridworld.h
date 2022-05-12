@@ -12,6 +12,7 @@
 #include <random>
 #include <limits>
 #include <ostream>
+#include <array>
 
 namespace rl::mdp {
     enum class GridworldAction {
@@ -21,9 +22,19 @@ namespace rl::mdp {
         DOWN
     };
 
+    inline const std::array<GridworldAction, 4> AvailableGridworldActions{
+        GridworldAction::LEFT,
+        GridworldAction::RIGHT,
+        GridworldAction::UP,
+        GridworldAction::DOWN
+    };
+
     /// Class for representing the current state in Gridworld
     class GridworldState {
     public:
+        GridworldState() = default;
+        GridworldState(size_t r, size_t c): row(r), column(c) {}
+
         size_t row, column;
 
         auto operator<(const GridworldState &other) const {
@@ -86,6 +97,16 @@ namespace rl::mdp {
         double state_transition_probability(const State &from_state, const Action &action,
                                             const State &to_state) const override;
 
+
+        /// Returns a vector with all the possible states that the MDP can contain.
+        /// \return
+        std::vector<State> get_states() const override;
+
+        /// Returns a list with the available actions for a given state.
+        /// \param state
+        /// \return
+        std::vector<Action> get_actions(const State &state) const override;
+
     private:
         using DynamicsMap = std::multimap<StateAction, StateRewardProbability>;
         DynamicsMap m_dynamics;
@@ -105,6 +126,33 @@ namespace rl::mdp {
         /// \return
         [[nodiscard]]
         Gridworld::Transition transition_non_deterministic(const State &state, const Action &action) const;
+    };
+
+
+    class GridworldRandomAgent: public MDPAgent<GridworldState, GridworldAction>{
+    public:
+        using RandomEngine = std::default_random_engine;
+
+        /// Constructor with initial state
+        /// \param initial_state
+        /// \param seed Set to zero for a random seed
+        explicit GridworldRandomAgent(const GridworldState& initial_state, RandomEngine::result_type seed = 0);
+
+        /// Return next action to take
+        /// \return
+        GridworldAction next_action() override;
+
+        /// Add the results of a transition
+        /// \param new_state
+        /// \param reward
+        void add_transition_result(const GridworldState &new_state, const double &reward) override;
+
+    private:
+        std::array<GridworldAction, 4> m_available_actions;
+        std::default_random_engine m_random_engine;
+        std::uniform_int_distribution<size_t> m_distribution;
+
+        GridworldState m_current_state;
     };
 
 } // namespace rl::mdp

@@ -6,18 +6,18 @@
 #include <algorithm>
 #include <numeric>
 #include <functional>
+#include <vector>
 #include <limits>
 
 using namespace Catch::literals;
 using rl::mdp::Gridworld;
+using rl::mdp::AvailableGridworldActions;
 
-TEST_CASE("Basic gridworld", "[gridworld]"){
+TEST_CASE("Basic Gridworld", "[gridworld]"){
     size_t rows = 5, columns = 5;
     Gridworld g(rows, columns, 42);
     using Action = Gridworld::Action;
     using State = Gridworld::State;
-
-    std::array<Action, 4> available_actions {Action::LEFT, Action::RIGHT, Action::UP, Action::DOWN};
 
     SECTION("Standard properties") {
         REQUIRE(g.get_rows() == rows);
@@ -28,11 +28,14 @@ TEST_CASE("Basic gridworld", "[gridworld]"){
         // All actions should be deterministic
         for (size_t i = 0; i < rows; ++i) {
             for (size_t j = 0; j < columns; ++j) {
-                for(auto action: available_actions) {
+                for(auto action: AvailableGridworldActions) {
                     DYNAMIC_SECTION("Action for " << i << "," << j << " - " << action) {
                         auto state = State{i, j};
                         auto [new_state, reward] = g.get_transition(state, action);
-                        REQUIRE(reward == 0.0_a);
+
+                        // Check if in the edge, which would mean that the returned state is the same
+                        if(new_state == state) REQUIRE(reward == -1.0_a);
+                        else REQUIRE(reward == 0.0_a);
 
                         // Determine the real new state
                         switch(action){
@@ -53,7 +56,7 @@ TEST_CASE("Basic gridworld", "[gridworld]"){
         g.add_transition(State{0, 1}, Action::RIGHT, State{4, 1}, 10., 1.0);
         g.add_transition(State{0, 1}, Action::UP, State{4, 1}, 10., 1.0);
         g.add_transition(State{0, 1}, Action::DOWN, State{4, 1}, 10., 1.0);
-        for (auto action: available_actions) {
+        for (auto action: AvailableGridworldActions) {
             DYNAMIC_SECTION("Check transitions (0,1) -> (4,1) :: " << action) {
                 auto transition = g.get_transition(State{0, 1}, action);
                 REQUIRE(transition.first == State{4, 1});
@@ -124,5 +127,51 @@ TEST_CASE("Basic gridworld", "[gridworld]"){
             REQUIRE(g.state_transition_probability(
                     State{0,0}, Action::RIGHT, State{1, 0}) == Approx(0.6));
         }
+    }
+
+    SECTION("State iteration"){
+        using namespace Catch::Matchers;
+
+        SECTION("Full states list") {
+            // Create states
+            std::vector<State> states_vector(rows * columns);
+            size_t r = 0, c = 0;
+            std::generate(states_vector.begin(), states_vector.end(), [=, &r, &c]() {
+                return State{r++ % rows, c++ % columns};
+            });
+
+            auto states_matcher = UnorderedEquals(states_vector);
+            REQUIRE_THAT(g.get_states(), states_matcher);
+        }
+
+        SECTION("Actions list"){
+            // Create actions vector
+            std::vector<Action> actions_vector(AvailableGridworldActions.begin(), AvailableGridworldActions.end());
+            auto actions_matcher = UnorderedEquals(actions_vector);
+
+            for(const State& s: g.get_states()){
+                REQUIRE_THAT(g.get_actions(s), actions_matcher);
+            }
+        }
+    }
+}
+
+using rl::mdp::GridworldRandomAgent;
+TEST_CASE("Basic GridworldRandomAgent", "[gridworld_agent]"){
+    using State = rl::mdp::GridworldState;
+    using Action = rl::mdp::GridworldAction;
+    GridworldRandomAgent agent(State{0, 0}, 42);
+
+    size_t samples = 10000;
+    std::map<Action, size_t> results;
+    for (int i = 0; i < samples; ++i) {
+        Action a = agent.next_action();
+        results[a] += 1;
+    }
+
+    // Verify equal results
+    auto expected_probability = Approx(1.0 / AvailableGridworldActions.size()).margin(0.01);
+    for(auto [action, hits]: results){
+        REQUIRE(hits / static_cast<double>(samples) == expected_probability);
     }
 }

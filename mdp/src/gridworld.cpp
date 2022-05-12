@@ -27,7 +27,14 @@ Gridworld::Transition Gridworld::get_transition(const Gridworld::State &state, c
 
     // Default case - No actions found for current state
     if(number_transitions == 0){
-        return transition_default(state, action);
+        Transition t = transition_default(state, action);
+
+        // If we reached the edge we return a reward of -1
+        if(t.first == state){
+            t.second = -1;
+        }
+
+        return t;
     }
 
     // Deterministic case
@@ -163,6 +170,24 @@ double Gridworld::state_transition_probability(const GridworldState &from_state,
     return 0.0;
 }
 
+std::vector<Gridworld::State> Gridworld::get_states() const {
+    // Create the states vector and return
+    std::vector<State> states;
+    states.reserve(get_rows() * get_columns());
+
+    for(size_t row=0; row != get_rows(); ++row){
+        for(size_t col=0; col != get_columns(); ++col){
+            states.emplace_back(row, col);
+        }
+    }
+
+    return states;
+}
+
+std::vector<Gridworld::Action> Gridworld::get_actions(const GridworldState &state) const {
+    return std::vector<Action>();
+}
+
 std::ostream &operator<<(std::ostream &os, const Gridworld::Action& action) {
     using Action = Gridworld::Action;
     switch (action) {
@@ -186,4 +211,23 @@ std::ostream &operator<<(std::ostream &os, const Gridworld::Action& action) {
 std::ostream &operator<<(std::ostream &os, const Gridworld::State& state) {
     os << "(" << state.row << "," << state.column << ")";
     return os;
+}
+
+GridworldRandomAgent::GridworldRandomAgent(const GridworldState &initial_state, unsigned int seed):
+        m_current_state(initial_state), m_random_engine(seed),
+        m_distribution(0, AvailableGridworldActions.size() - 1){
+
+    // Initialize engine
+    if(seed == 0){
+        m_random_engine.seed(std::random_device{}());
+    }
+}
+
+GridworldAction GridworldRandomAgent::next_action() {
+    size_t selection = m_distribution(m_random_engine);
+    return AvailableGridworldActions[selection];
+}
+
+void GridworldRandomAgent::add_transition_result(const GridworldState &new_state, const double &reward) {
+    // Do nothing
 }
