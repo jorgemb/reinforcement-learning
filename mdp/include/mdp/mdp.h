@@ -2,6 +2,7 @@
 #define REINFORCEMENT_LEARNING_MDP_H
 
 #include <tuple>
+#include <vector>
 
 namespace rl::mdp{
     template <class TState, class TAction, class TReward=double, class TProbability=double>
@@ -14,21 +15,21 @@ namespace rl::mdp{
         using Probability = TProbability;
 
         // Complex definitions
-        using StateAction = std::pair<State, Action>;
-        using Transition = std::pair<State, Reward>;
-        using StateRewardProbability = std::tuple<State, Reward, Probability>;
+        using StateAction = std::pair<TState, TAction>;
+        using Transition = std::pair<TState, TReward>;
+        using StateRewardProbability = std::tuple<TState, TReward, TProbability>;
 
         // Virtual destructor
         virtual ~MDP() = default;
 
         // MDP functionality
 
-        /// Returns a transition from a State-Action pair
+        /// Returns a transitions from a State-Action pair
         /// \param state
         /// \param action
         /// \return
         [[nodiscard]]
-        virtual Transition get_transition(const State& state, const Action& action) const = 0;
+        virtual std::vector<StateRewardProbability> get_transitions(const State& state, const Action& action) const = 0;
 
         /// Adds a transition with the given probability
         /// \param state
@@ -68,17 +69,14 @@ namespace rl::mdp{
 
     protected:
         // Useful methods for extracting data from StateRewardProbability
-        static State srp_state(const StateRewardProbability& srp){
-            return std::get<0>(srp);
-        }
+        static State srp_state(const StateRewardProbability& srp){ return std::get<0>(srp); }
+        static State& srp_state(StateRewardProbability& srp){ return std::get<0>(srp); }
 
-        static Reward srp_reward(const StateRewardProbability& srp){
-            return std::get<1>(srp);
-        }
+        static Reward srp_reward(const StateRewardProbability& srp){ return std::get<1>(srp); }
+        static Reward& srp_reward(StateRewardProbability& srp){ return std::get<1>(srp); }
 
-        static Probability srp_probability(const StateRewardProbability& srp){
-            return std::get<2>(srp);
-        }
+        static Probability srp_probability(const StateRewardProbability& srp){ return std::get<2>(srp); }
+        static Probability& srp_probability(StateRewardProbability& srp){ return std::get<2>(srp); }
 
         static Transition srp_transition(const StateRewardProbability& srp){
             return Transition{srp_state(srp), srp_reward(srp)};
@@ -102,6 +100,23 @@ namespace rl::mdp{
         /// \param new_state
         /// \param reward
         virtual void add_transition_result(const TState& new_state, const TReward& reward) = 0;
+    };
+
+    template <class TState, class TAction, class TReward=double, class TProbability=double>
+    class MDPPolicy{
+    public:
+        // Definitions
+        using ActionProbability = std::pair<TAction, TProbability>;
+
+        /// Return the possible actions and its probabilities based on the current state.
+        /// \param state
+        /// \return
+        virtual std::vector<ActionProbability> get_action_probabilities(const TState& state) const = 0;
+
+        /// Returns the value function result given a state.
+        /// \param state
+        /// \return
+        virtual TReward value_function(const TState& state) const = 0;
     };
 
 } // namespace rl::mdp
