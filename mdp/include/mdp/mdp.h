@@ -19,7 +19,7 @@ namespace rl::mdp{
         typedef std::tuple<State, Reward, Probability> StateRewardProbability;
 
         // Virtual destructor
-        virtual ~MDP() {}
+        virtual ~MDP() = default;
 
         // MDP functionality
 
@@ -47,6 +47,15 @@ namespace rl::mdp{
         /// \param action
         /// \return
         virtual Reward expected_reward(const State& state, const Action& action) const = 0;
+
+        /// Probability of going to a given state from a state-action pair
+        /// \param from_state
+        /// \param action
+        /// \param to_state
+        /// \return
+        virtual Probability state_transition_probability(const State& from_state,
+                                                         const Action& action,
+                                                         const State& to_state) const = 0;
 
     protected:
         // Useful methods

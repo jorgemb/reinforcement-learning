@@ -98,8 +98,31 @@ TEST_CASE("Basic gridworld", "[gridworld]"){
 
             // Expected reward for non-deterministic transition
             g.add_transition(State{0, 0}, Action::LEFT, State{2, 2}, 100, 3.0);
-            double expected = (10.0 * 0.25) + (100.0 * 0.75);
+            g.add_transition(State{0, 0}, Action::LEFT, State{3, 3}, 50, 6.0);
+            double expected = (10.0 * 0.1) + (100.0 * 0.3) + (50 * 0.6);
             REQUIRE(g.expected_reward(State{0, 0}, Action::LEFT) == Approx(expected));
+        }
+
+        SECTION("State-transition probability"){
+            // Expected reward for known transition
+            REQUIRE(g.state_transition_probability(
+                    State{0,0}, Action::RIGHT, State{0, 1}) == 1.0);
+
+            // Expected reward for impossible transition
+            REQUIRE(g.state_transition_probability(
+                    State{0, 0}, Action::RIGHT, State{1,1}) == 0.0);
+
+            // Expected reward for different transitions
+            g.add_transition(State{0,0}, Action::RIGHT, State{0, 1}, 10, 1);
+            g.add_transition(State{0,0}, Action::RIGHT, State{1, 1}, 10, 3);
+            g.add_transition(State{0,0}, Action::RIGHT, State{1, 0}, 10, 4);
+            g.add_transition(State{0,0}, Action::RIGHT, State{1, 0}, 3, 2);
+            REQUIRE(g.state_transition_probability(
+                    State{0,0}, Action::RIGHT, State{0, 1}) == Approx(0.1));
+            REQUIRE(g.state_transition_probability(
+                    State{0,0}, Action::RIGHT, State{1, 1}) == Approx(0.3));
+            REQUIRE(g.state_transition_probability(
+                    State{0,0}, Action::RIGHT, State{1, 0}) == Approx(0.6));
         }
     }
 }

@@ -1,7 +1,3 @@
-//
-// Created by Jorge Martinez Bonilla on 10/05/2022.
-//
-
 #include "../include/mdp/gridworld.h"
 
 #include <numeric>
@@ -37,8 +33,7 @@ Gridworld::Transition Gridworld::get_transition(const Gridworld::State &state, c
     // Deterministic case
     if (number_transitions == 1){
         auto element_iter = m_dynamics.find(stateAction);
-        auto [state, reward, probability] = element_iter->second;
-        return Transition {state, reward};
+        return srp_transition(element_iter->second);
     }
 
     // Non-deterministic case
@@ -130,6 +125,42 @@ double Gridworld::expected_reward(const GridworldState &state, const GridworldAc
     });
 
     return expected_reward / total_probability;
+}
+
+double Gridworld::state_transition_probability(const GridworldState &from_state,
+                                               const GridworldAction &action,
+                                               const GridworldState &to_state) const {
+    // Get all transitions from state-action pair
+    auto [start_iter, end_iter] = m_dynamics.equal_range(StateAction{from_state, action});
+
+    // Check if it is a default probability or set state
+    // ... default
+    if(start_iter == m_dynamics.end()) {
+        auto [default_state, default_reward] = transition_default(from_state, action);
+        if (default_state == to_state) {
+            return 1.0;
+        } else {
+            return 0.0;
+        }
+    }
+
+    // ... set
+    Probability total_probability = 0.0, to_state_probability = 0.0;
+    for(auto iter = start_iter; iter != end_iter; ++iter){
+        StateRewardProbability srp = iter->second;
+
+        if(srp_state(srp) == to_state){
+            to_state_probability += srp_probability(srp);
+        }
+        total_probability += srp_probability(srp);
+    }
+
+    // Calculate final probability
+    if(total_probability != 0.0){
+        return to_state_probability / total_probability;
+    }
+
+    return 0.0;
 }
 
 std::ostream &operator<<(std::ostream &os, const Gridworld::Action& action) {

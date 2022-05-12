@@ -37,12 +37,12 @@ TEST_CASE("Single bandit", "[kbandit]") {
 		INFO("Total: " << total << ", calculated mean : " << calc_mean);
 		REQUIRE(bandit.mean_reward() == Approx(calc_mean).margin(0.01));
 
-		// Calculate variance
+		// Calculate calculated_variance
 		double acum_variance = std::transform_reduce(values.begin(), values.end(), 0.0, std::plus<>{}, 
 			[calc_mean](double val) { return std::pow(val - calc_mean, 2.0); });
-		double variance = acum_variance / n;
-		INFO("Acummulated variance: " << acum_variance << ", variance: " << variance);
-		REQUIRE(bandit.variance() == Approx(variance).margin(0.01));
+		double calculated_variance = acum_variance / n;
+		INFO("Acummulated calculated_variance: " << acum_variance << ", calculated_variance: " << calculated_variance);
+		REQUIRE(bandit.variance() == Approx(calculated_variance).margin(0.01));
 	}
 }
 

@@ -78,6 +78,14 @@ namespace rl::mdp {
         /// \return
         double expected_reward(const State &state, const Action &action) const override;
 
+        /// Returns probability of going to a state from a state-action pair.
+        /// \param from_state
+        /// \param action
+        /// \param to_state
+        /// \return
+        double state_transition_probability(const State &from_state, const Action &action,
+                                            const State &to_state) const override;
+
     private:
         using DynamicsMap = std::multimap<StateAction, StateRewardProbability>;
         DynamicsMap m_dynamics;

@@ -40,26 +40,7 @@ std::vector<double> test_agent_episodes(const std::function<std::unique_ptr<KBan
     return accumulator;
 }
 
-std::vector<double>& running_average(std::vector<double>& values, std::size_t window_size = 100){
-//    const std::size_t steps = values.size() - window_size + 1;
-//    std::vector<double> results(steps);
-//
-//    auto values_iter = values.cbegin();
-//
-//    for(auto results_iter = results.begin(); results_iter != results.end(); ++results_iter){
-//        *results_iter = std::reduce(values_iter, values_iter + window_size) / static_cast<double>(window_size);
-//        values_iter = std::next(values_iter);
-//    }
-
-//    std::vector<double> results(values.size(), 0.);
-//    auto values_iter = values.cbegin();
-//    for(auto iter=results.begin(); iter != results.end(); ++iter){
-//        *iter = std::reduce(values.begin(), values_iter) / static_cast<double>(std::distance(values.begin(), values_iter));
-//        values_iter = std::next(values_iter);
-//    }
-//
-//    return results;
-
+std::vector<double>& running_average(std::vector<double>& values){
     std::partial_sum(values.begin(), values.end(), values.begin());
     double count = 1.;
     std::transform(values.begin(), values.end(), values.begin(), [&count](auto val){
