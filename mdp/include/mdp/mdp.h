@@ -67,7 +67,6 @@ namespace rl::mdp{
         /// \return
         virtual std::vector<Action> get_actions(const State& state) const = 0;
 
-    protected:
         // Useful methods for extracting data from StateRewardProbability
         static State srp_state(const StateRewardProbability& srp){ return std::get<0>(srp); }
         static State& srp_state(StateRewardProbability& srp){ return std::get<0>(srp); }
@@ -124,7 +123,6 @@ namespace rl::mdp{
         /// \return
         virtual Reward value_function(const State& state) const = 0;
     };
-
 } // namespace rl::mdp
 
 #endif //REINFORCEMENT_LEARNING_MDP_H

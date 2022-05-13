@@ -178,13 +178,21 @@ std::vector<Gridworld::Action> Gridworld::get_actions(const GridworldState &stat
     return {AvailableGridworldActions.begin(), AvailableGridworldActions.end()};
 }
 
+GreedyPolicy::GreedyPolicy(std::shared_ptr<Gridworld> gridworld, double gamma):
+m_gridworld(std::move(gridworld)),
+m_rows(m_gridworld->get_rows()), m_columns(m_gridworld->get_columns()), m_gamma(gamma),
+m_value_function_table(m_rows * m_columns, 0.0) { }
+
 std::vector<GreedyPolicy::ActionProbability> GreedyPolicy::get_action_probabilities(const GridworldState &state) const {
-    return std::vector<ActionProbability>();
+    auto actions = m_gridworld->get_actions(state);
+
+    return {};
 }
 
 double GreedyPolicy::value_function(const GridworldState &state) const {
-    return 0;
+    return value_from_table(state);
 }
+
 
 std::ostream &operator<<(std::ostream &os, const Gridworld::Action& action) {
     using Action = Gridworld::Action;

@@ -13,6 +13,7 @@
 #include <limits>
 #include <ostream>
 #include <array>
+#include <memory>
 
 namespace rl::mdp {
     enum class GridworldAction {
@@ -124,17 +125,36 @@ namespace rl::mdp {
         /// Default constructor with rows and columns.
         /// \param rows
         /// \param columns
-        GreedyPolicy(size_t rows, size_t columns);
+        explicit GreedyPolicy(std::shared_ptr<Gridworld> gridworld, double gamma);
 
         /// Return the possible actions and its probabilities based on the current state.
         /// \param state
         /// \return
+        [[nodiscard]]
         std::vector<ActionProbability> get_action_probabilities(const State &state) const override;
 
         /// Returns the value function result given a state.
         /// \param state
         /// \return
+        [[nodiscard]]
         Reward value_function(const State &state) const override;
+
+    private:
+        std::shared_ptr<Gridworld> m_gridworld;
+        size_t m_rows, m_columns;
+        double m_gamma;
+        std::vector<Probability> m_value_function_table;
+
+        /// Returns a copy a the value from the value function table
+        /// \param state
+        /// \return
+        [[nodiscard]]
+        Probability value_from_table(const State& state) const{ return m_value_function_table[state.row * m_columns + state.column]; };
+
+        /// Returns a reference to the value function table
+        /// \param state
+        /// \return
+        Probability& value_from_table(const State& state) { return m_value_function_table[state.row * m_columns + state.column]; };
     };
 
 } // namespace rl::mdp

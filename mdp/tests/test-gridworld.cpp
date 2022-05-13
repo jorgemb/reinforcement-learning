@@ -179,8 +179,8 @@ using ActionProbability = rl::mdp::GreedyPolicy::ActionProbability;
 TEST_CASE("Gridworld Policy", "[gridworld]"){
     // Initialize elements
     size_t rows = 5, columns = 5;
-    Gridworld g(rows, columns);
-    rl::mdp::GreedyPolicy policy(rows, columns);
+    auto g = std::make_shared<Gridworld>(rows, columns);
+    rl::mdp::GreedyPolicy policy(g, 1.0);
 
     SECTION("Action probabilities"){
         SECTION("Default probabilities") {
@@ -206,6 +206,10 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
     }
 
     SECTION("Value function"){
-
+        SECTION("Default value function"){
+            for(const auto& s: g->get_states()){
+                REQUIRE(policy.value_function(s) == 0.0_a);
+            }
+        }
     }
 }
