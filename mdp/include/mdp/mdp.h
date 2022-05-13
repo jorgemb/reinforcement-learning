@@ -106,17 +106,23 @@ namespace rl::mdp{
     class MDPPolicy{
     public:
         // Definitions
+        using State = TState;
+        using Action = TAction;
+        using Reward = TReward;
+        using Probability = TProbability;
+
         using ActionProbability = std::pair<TAction, TProbability>;
+
 
         /// Return the possible actions and its probabilities based on the current state.
         /// \param state
         /// \return
-        virtual std::vector<ActionProbability> get_action_probabilities(const TState& state) const = 0;
+        virtual std::vector<ActionProbability> get_action_probabilities(const State& state) const = 0;
 
         /// Returns the value function result given a state.
         /// \param state
         /// \return
-        virtual TReward value_function(const TState& state) const = 0;
+        virtual Reward value_function(const State& state) const = 0;
     };
 
 } // namespace rl::mdp

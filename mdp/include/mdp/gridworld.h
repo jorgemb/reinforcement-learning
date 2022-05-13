@@ -119,6 +119,24 @@ namespace rl::mdp {
         StateRewardProbability transition_default(const State &state, const Action &action) const;
     };
 
+    class GreedyPolicy: public MDPPolicy<GridworldState, GridworldAction>{
+    public:
+        /// Default constructor with rows and columns.
+        /// \param rows
+        /// \param columns
+        GreedyPolicy(size_t rows, size_t columns);
+
+        /// Return the possible actions and its probabilities based on the current state.
+        /// \param state
+        /// \return
+        std::vector<ActionProbability> get_action_probabilities(const State &state) const override;
+
+        /// Returns the value function result given a state.
+        /// \param state
+        /// \return
+        Reward value_function(const State &state) const override;
+    };
+
 } // namespace rl::mdp
 
 /// Outputs the action of the Gridworld

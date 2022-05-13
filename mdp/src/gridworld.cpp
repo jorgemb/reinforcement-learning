@@ -178,6 +178,14 @@ std::vector<Gridworld::Action> Gridworld::get_actions(const GridworldState &stat
     return {AvailableGridworldActions.begin(), AvailableGridworldActions.end()};
 }
 
+std::vector<GreedyPolicy::ActionProbability> GreedyPolicy::get_action_probabilities(const GridworldState &state) const {
+    return std::vector<ActionProbability>();
+}
+
+double GreedyPolicy::value_function(const GridworldState &state) const {
+    return 0;
+}
+
 std::ostream &operator<<(std::ostream &os, const Gridworld::Action& action) {
     using Action = Gridworld::Action;
     switch (action) {

@@ -10,12 +10,13 @@ using namespace Catch::literals;
 using rl::mdp::Gridworld;
 using rl::mdp::AvailableGridworldActions;
 
-TEST_CASE("Basic Gridworld", "[gridworld]") {
+using Action = Gridworld::Action;
+using State = Gridworld::State;
+using StateRewardProbability = rl::mdp::Gridworld::StateRewardProbability;
+
+TEST_CASE("Gridworld", "[gridworld]") {
     size_t rows = 5, columns = 5;
     Gridworld g(rows, columns);
-    using Action = Gridworld::Action;
-    using State = Gridworld::State;
-    using StateRewardProbability = rl::mdp::Gridworld::StateRewardProbability;
 
     SECTION("Standard properties") {
         REQUIRE(g.get_rows() == rows);
@@ -170,5 +171,41 @@ TEST_CASE("Basic Gridworld", "[gridworld]") {
                 REQUIRE_THAT(g.get_actions(s), actions_matcher);
             }
         }
+    }
+}
+
+using ActionProbability = rl::mdp::GreedyPolicy::ActionProbability;
+
+TEST_CASE("Gridworld Policy", "[gridworld]"){
+    // Initialize elements
+    size_t rows = 5, columns = 5;
+    Gridworld g(rows, columns);
+    rl::mdp::GreedyPolicy policy(rows, columns);
+
+    SECTION("Action probabilities"){
+        SECTION("Default probabilities") {
+            double default_probability = 1.0 / static_cast<double>(AvailableGridworldActions.size());
+            std::vector<ActionProbability> default_action_probabilities;
+            std::transform(AvailableGridworldActions.begin(), AvailableGridworldActions.end(),
+                           std::back_inserter(default_action_probabilities),
+                           [default_probability](const auto& val){
+                return ActionProbability{val, default_probability};
+            } );
+            auto action_probability_matcher = Catch::Matchers::UnorderedEquals(default_action_probabilities);
+
+            for (size_t i = 0; i < rows; ++i) {
+                for (size_t j = 0; j < columns; ++j) {
+                    auto action_probabilities = policy.get_action_probabilities(State{i, j});
+
+                    REQUIRE(action_probabilities.size() == 4);
+                    REQUIRE_THAT(action_probabilities, action_probability_matcher);
+                }
+            }
+        }
+
+    }
+
+    SECTION("Value function"){
+
     }
 }
