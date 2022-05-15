@@ -43,4 +43,4 @@ WORKDIR /build/
 #ARG CC=/usr/bin/clang
 #ARG CXX=/usr/bin/clang++
 
-CMD cmake -DCMAKE_INSTALL_PREFIX=/install/ /app/ && cmake --build . -j8 && cmake --install .
+CMD cmake -DCMAKE_INSTALL_PREFIX=/install/ /app/ && cmake --build . -j8 && ctest && cmake --install .

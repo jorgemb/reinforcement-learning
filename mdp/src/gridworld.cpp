@@ -181,12 +181,26 @@ std::vector<Gridworld::Action> Gridworld::get_actions(const GridworldState &stat
 GreedyPolicy::GreedyPolicy(std::shared_ptr<Gridworld> gridworld, double gamma):
 m_gridworld(std::move(gridworld)),
 m_rows(m_gridworld->get_rows()), m_columns(m_gridworld->get_columns()), m_gamma(gamma),
-m_value_function_table(m_rows * m_columns, 0.0) { }
+m_value_function_table(m_rows * m_columns, 0.0) {
+    // Initialize the state action probability map
+    for(const auto& state: m_gridworld->get_states()){
+        auto actions = m_gridworld->get_actions(state);
+        Probability starting_probability = 1.0 / static_cast<Probability>(actions.size());
+
+        for(auto a: actions){
+            m_state_action_probability_map[state][a] = starting_probability;
+        }
+    }
+}
 
 std::vector<GreedyPolicy::ActionProbability> GreedyPolicy::get_action_probabilities(const GridworldState &state) const {
-    auto actions = m_gridworld->get_actions(state);
+    std::vector<ActionProbability> action_probability;
+    std::transform(m_state_action_probability_map.at(state).cbegin(), m_state_action_probability_map.at(state).cend(),
+                   std::back_inserter(action_probability), [](const auto& val){
+        return ActionProbability{val.first, val.second};
+    });
 
-    return {};
+    return action_probability;
 }
 
 double GreedyPolicy::value_function(const GridworldState &state) const {

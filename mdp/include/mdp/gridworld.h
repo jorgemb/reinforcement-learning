@@ -145,6 +145,10 @@ namespace rl::mdp {
         double m_gamma;
         std::vector<Probability> m_value_function_table;
 
+        // Way of representing action-probability pairs
+        using ActionProbabilityMap = std::map<Action, Probability>;
+        std::map<State, ActionProbabilityMap> m_state_action_probability_map;
+
         /// Returns a copy a the value from the value function table
         /// \param state
         /// \return
