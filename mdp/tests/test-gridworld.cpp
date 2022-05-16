@@ -15,7 +15,7 @@ using State = Gridworld::State;
 using StateRewardProbability = rl::mdp::Gridworld::StateRewardProbability;
 
 TEST_CASE("Gridworld", "[gridworld]") {
-    size_t rows = 5, columns = 5;
+    size_t rows = 4, columns = 4;
     Gridworld g(rows, columns);
 
     SECTION("Standard properties") {
@@ -34,6 +34,13 @@ TEST_CASE("Gridworld", "[gridworld]") {
                         REQUIRE(transitions.size() == 1);
                         auto [new_state, reward, probability] = transitions[0];
 
+                        // Verify new_state transition
+                        REQUIRE(new_state.row >= 0);
+                        REQUIRE(new_state.row < rows);
+                        REQUIRE(new_state.column >= 0);
+                        REQUIRE(new_state.column < columns);
+
+
                         // Check if in the edge, which would mean that the returned state is the same
                         if (new_state == state) REQUIRE(reward == -1.0_a);
                         else
@@ -45,13 +52,13 @@ TEST_CASE("Gridworld", "[gridworld]") {
                                 REQUIRE(new_state == State{i, j == 0 ? j : j - 1});
                                 break;
                             case Action::RIGHT:
-                                REQUIRE(new_state == State{i, j >= columns ? j : j + 1});
+                                REQUIRE(new_state == State{i, j >= columns-1 ? j : j + 1});
                                 break;
                             case Action::UP:
                                 REQUIRE(new_state == State{i == 0 ? i : i - 1, j});
                                 break;
                             case Action::DOWN:
-                                REQUIRE(new_state == State{i >= rows ? i : i + 1, j});
+                                REQUIRE(new_state == State{i >= rows-1 ? i : i + 1, j});
                                 break;
                         }
                     }
@@ -159,7 +166,17 @@ TEST_CASE("Gridworld", "[gridworld]") {
             });
 
             auto states_matcher = UnorderedEquals(states_vector);
+            auto g_states = g.get_states();
             REQUIRE_THAT(g.get_states(), states_matcher);
+
+            // Verify state bounds
+            for(const auto& s: g_states){
+                auto [i, j] = s;
+                REQUIRE(i >= 0);
+                REQUIRE(i < rows);
+                REQUIRE(j >= 0);
+                REQUIRE(j < columns);
+            }
         }
 
         SECTION("Actions list") {
@@ -178,12 +195,12 @@ using ActionProbability = rl::mdp::GreedyPolicy::ActionProbability;
 
 TEST_CASE("Gridworld Policy", "[gridworld]"){
     // Initialize elements
-    size_t rows = 5, columns = 5;
+    size_t rows = 4, columns = 4;
     auto g = std::make_shared<Gridworld>(rows, columns);
-    rl::mdp::GreedyPolicy policy(g, 1.0);
 
-    SECTION("Action probabilities"){
-        SECTION("Default probabilities") {
+    SECTION("Default values"){
+        rl::mdp::GreedyPolicy policy(g, 1.0);
+        SECTION("Probabilities") {
             double default_probability = 1.0 / static_cast<double>(AvailableGridworldActions.size());
             std::vector<ActionProbability> default_action_probabilities;
             std::transform(AvailableGridworldActions.begin(), AvailableGridworldActions.end(),
@@ -203,12 +220,87 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
             }
         }
 
+        SECTION("Value function"){
+            SECTION("Default value function"){
+                for(const auto& s: g->get_states()){
+                    REQUIRE(policy.value_function(s) == 0.0_a);
+                }
+            }
+        }
     }
 
-    SECTION("Value function"){
-        SECTION("Default value function"){
+    SECTION("Expected values"){
+        // Set the expected world
+        for(const auto& s: g->get_states()){
+            for(const auto& a: g->get_actions(s)){
+                // Check if it is terminal state or other
+                if(s == State{0, 0} || s == State{3, 3}){
+                    // Terminal state
+                    g->add_transition(s, a, s, 0.0, 1.0);
+                } else {
+                    // Other state
+                    auto [s_i, r, p] = g->get_transitions(s, a)[0];
+                    g->add_transition(s, a, s_i, -1.0, 1.0);
+
+
+                }
+            }
+        }
+
+        SECTION("Policy evaluation"){
+            // Values taken from Sutton & Barto [figure 4.2]
+            rl::mdp::GreedyPolicy policy(g, 1.0);
+
+            // First evaluation
+            double change = policy.policy_evaluation();
+            REQUIRE(std::abs(change) == 1.0_a);
+
             for(const auto& s: g->get_states()){
-                REQUIRE(policy.value_function(s) == 0.0_a);
+                if(s == State{0, 0} || s == State{3, 3}){
+                    REQUIRE(policy.value_function(s) == 0.0_a);
+                    INFO("Final state");
+                } else {
+                    REQUIRE(policy.value_function(s) == -1.0_a);
+                    INFO("Normal state");
+                }
+            }
+
+            // Second evaluation
+            change = policy.policy_evaluation();
+            REQUIRE(std::abs(change) == 1.0_a);
+
+            std::vector possible_values{0.0_a, -1.75_a, -2.0_a};
+            for(const auto& s: g->get_states()){
+                INFO("State: " << s << " value:" << policy.value_function(s));
+                REQUIRE(std::find(possible_values.cbegin(), possible_values.cend(), policy.value_function(s)) != possible_values.cend());
+            }
+        }
+
+        SECTION("Policy improvement"){
+            rl::mdp::GreedyPolicy policy(g, 1.0);
+            policy.policy_evaluation();
+            policy.update_policy();
+
+            // Verify actions
+            using ActionList = std::vector<Action>;
+            using Line = std::vector<ActionList>;
+            for(const auto& s: g->get_states()){
+                for(const auto& [a, p]: policy.get_action_probabilities(s)){
+                    if(p == 0.0_a) continue;
+                    INFO("State: " << s);
+                    INFO("Probability: " << p);
+
+                    // Check type of state
+                    if(s == State{0, 1}){
+                        REQUIRE(a == Action::LEFT);
+                    } else if(s == State{1, 0}){
+                        REQUIRE(a == Action::UP);
+                    } else if(s == State{3, 2}){
+                        REQUIRE(a == Action::RIGHT);
+                    } else if(s == State{2, 3}){
+                        REQUIRE(a == Action::DOWN);
+                    }
+                }
             }
         }
     }

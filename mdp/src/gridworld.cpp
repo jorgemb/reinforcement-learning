@@ -61,7 +61,7 @@ Gridworld::transition_default(const Gridworld::State &state, const Gridworld::Ac
             break;
         case Action::RIGHT:
             srp = StateRewardProbability{
-                    State{state.row, state.column >= m_columns ? m_columns - 1 : state.column + 1},
+                    State{state.row, state.column >= m_columns - 1 ? m_columns - 1 : state.column + 1},
                     0.0,
                     1.0};
             break;
@@ -73,7 +73,7 @@ Gridworld::transition_default(const Gridworld::State &state, const Gridworld::Ac
             break;
         case Action::DOWN:
             srp = StateRewardProbability{
-                    State{state.row >= m_rows ? m_rows - 1 : state.row + 1, state.column},
+                    State{state.row >= m_rows - 1 ? m_rows - 1 : state.row + 1, state.column},
                     0.0,
                     1.0};
             break;
@@ -205,6 +205,65 @@ std::vector<GreedyPolicy::ActionProbability> GreedyPolicy::get_action_probabilit
 
 double GreedyPolicy::value_function(const GridworldState &state) const {
     return value_from_table(state);
+}
+
+double GreedyPolicy::policy_evaluation() {
+    Probability delta = 0.0;
+    auto states = m_gridworld->get_states();
+    auto value_table_copy{ m_value_function_table };
+
+    // Iterate on each state
+    for(const auto& s: states){
+        Reward expected_value = 0.0;
+        for(const auto& [a, p]: get_action_probabilities(s)){
+            auto srp_list = m_gridworld->get_transitions(s, a);
+            Reward expected_reward = std::reduce(srp_list.cbegin(), srp_list.cend(), 0.0,
+                                               [this](const auto& val, const auto& iter){
+                auto [s_i, reward, probability] = iter;
+                return val + probability * (reward + m_gamma * value_from_table(s_i));
+            });
+
+            expected_value += expected_reward * p;
+        }
+
+        auto [row, col] = s;
+        value_table_copy[row * m_columns + col] = expected_value;
+        delta = std::max(delta, std::abs(value_from_table(s) - expected_value));
+    }
+
+    m_value_function_table = std::move(value_table_copy);
+
+    return delta;
+}
+
+void GreedyPolicy::update_policy() {
+    // Iterate on each state-action
+    for(const auto& s: m_gridworld->get_states()){
+        Action best_action{};
+        Probability best_action_reward = -std::numeric_limits<Probability>::infinity();
+
+        for(const auto& a: m_gridworld->get_actions(s)) {
+            auto srp_list = m_gridworld->get_transitions(s, a);
+            Reward expected_reward = std::reduce(srp_list.cbegin(), srp_list.cend(), 0.0,
+                                                 [this](const auto &val, const auto &iter) {
+                                                     auto [s_i, reward, probability] = iter;
+                                                     return val +
+                                                            probability * (reward + m_gamma * value_from_table(s_i));
+                                                 });
+
+            // Get best action
+            if(expected_reward > best_action_reward){
+                best_action = a;
+                best_action_reward = expected_reward;
+            }
+        }
+
+        // Set the probabilities to the best action
+        // ToTry: This could use a softmax function to set the probabilities according to the expected reward of each action
+        for(const auto& [action, probability]: m_state_action_probability_map[s]){
+            m_state_action_probability_map[s][action] = action == best_action ? 1.0 : 0.0;
+        }
+    }
 }
 
 

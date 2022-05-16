@@ -133,6 +133,15 @@ namespace rl::mdp {
         [[nodiscard]]
         std::vector<ActionProbability> get_action_probabilities(const State &state) const override;
 
+        /// Approximates the value function doing a single policy evaluation.
+        /// \param epsilon
+        /// \return
+        double policy_evaluation();
+
+        /// Makes the policy greedy according to the value function
+        /// \return
+        void update_policy();
+
         /// Returns the value function result given a state.
         /// \param state
         /// \return
