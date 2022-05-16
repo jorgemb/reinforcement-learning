@@ -87,24 +87,26 @@ namespace rl::mdp {
         /// \param state
         /// \param action
         /// \return
-        double expected_reward(const State &state, const Action &action) const override;
+        Reward expected_reward(const State &state, const Action &action) const override;
 
         /// Returns probability of going to a state from a state-action pair.
         /// \param from_state
         /// \param action
         /// \param to_state
         /// \return
-        double state_transition_probability(const State &from_state, const Action &action,
+        Probability state_transition_probability(const State &from_state, const Action &action,
                                             const State &to_state) const override;
 
 
         /// Returns a vector with all the possible states that the MDP can contain.
         /// \return
+        [[nodiscard]]
         std::vector<State> get_states() const override;
 
         /// Returns a list with the available actions for a given state.
         /// \param state
         /// \return
+        [[nodiscard]]
         std::vector<Action> get_actions(const State &state) const override;
 
     private:
@@ -120,18 +122,22 @@ namespace rl::mdp {
         StateRewardProbability transition_default(const State &state, const Action &action) const;
     };
 
-    class GreedyPolicy: public MDPPolicy<GridworldState, GridworldAction>{
+    class GridworldGreedyPolicy: public MDPPolicy<GridworldState, GridworldAction>{
     public:
         /// Default constructor with rows and columns.
         /// \param rows
         /// \param columns
-        explicit GreedyPolicy(std::shared_ptr<Gridworld> gridworld, double gamma);
+        explicit GridworldGreedyPolicy(std::shared_ptr<Gridworld> gridworld, double gamma);
 
         /// Return the possible actions and its probabilities based on the current state.
         /// \param state
         /// \return
         [[nodiscard]]
         std::vector<ActionProbability> get_action_probabilities(const State &state) const override;
+
+        /// Returns the gridworld associated to the policy.
+        /// \return
+        std::shared_ptr<Gridworld> get_gridworld() const;
 
         /// Approximates the value function doing a single policy evaluation.
         /// \param epsilon
@@ -183,6 +189,12 @@ std::ostream &operator<<(std::ostream &os, const rl::mdp::Gridworld::Action &act
 /// \param state
 /// \return
 std::ostream &operator<<(std::ostream &os, const rl::mdp::Gridworld::State &state);
+
+/// Outputs the current policy for a gridworld
+/// \param os
+/// \param greedy_policy
+/// \return
+std::ostream& operator<<(std::ostream& os, const rl::mdp::GridworldGreedyPolicy& greedy_policy);
 
 
 

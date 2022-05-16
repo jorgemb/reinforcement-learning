@@ -191,7 +191,7 @@ TEST_CASE("Gridworld", "[gridworld]") {
     }
 }
 
-using ActionProbability = rl::mdp::GreedyPolicy::ActionProbability;
+using ActionProbability = rl::mdp::GridworldGreedyPolicy::ActionProbability;
 
 TEST_CASE("Gridworld Policy", "[gridworld]"){
     // Initialize elements
@@ -199,7 +199,7 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
     auto g = std::make_shared<Gridworld>(rows, columns);
 
     SECTION("Default values"){
-        rl::mdp::GreedyPolicy policy(g, 1.0);
+        rl::mdp::GridworldGreedyPolicy policy(g, 1.0);
         SECTION("Probabilities") {
             double default_probability = 1.0 / static_cast<double>(AvailableGridworldActions.size());
             std::vector<ActionProbability> default_action_probabilities;
@@ -241,15 +241,13 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
                     // Other state
                     auto [s_i, r, p] = g->get_transitions(s, a)[0];
                     g->add_transition(s, a, s_i, -1.0, 1.0);
-
-
                 }
             }
         }
 
         SECTION("Policy evaluation"){
             // Values taken from Sutton & Barto [figure 4.2]
-            rl::mdp::GreedyPolicy policy(g, 1.0);
+            rl::mdp::GridworldGreedyPolicy policy(g, 1.0);
 
             // First evaluation
             double change = policy.policy_evaluation();
@@ -257,11 +255,11 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
 
             for(const auto& s: g->get_states()){
                 if(s == State{0, 0} || s == State{3, 3}){
+                    INFO("Final state - " << s);
                     REQUIRE(policy.value_function(s) == 0.0_a);
-                    INFO("Final state");
                 } else {
+                    INFO("Normal state - " << s);
                     REQUIRE(policy.value_function(s) == -1.0_a);
-                    INFO("Normal state");
                 }
             }
 
@@ -277,7 +275,7 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
         }
 
         SECTION("Policy improvement"){
-            rl::mdp::GreedyPolicy policy(g, 1.0);
+            rl::mdp::GridworldGreedyPolicy policy(g, 1.0);
             policy.policy_evaluation();
             policy.update_policy();
 

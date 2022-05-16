@@ -27,7 +27,7 @@ install(
 
 # Run MDP
 add_executable("run-mdp" run_mdp.cpp)
-target_link_libraries("run-mdp" PRIVATE fmt::fmt Boost::graph)
+target_link_libraries("run-mdp" PRIVATE mdp fmt::fmt Boost::graph)
 
 # Tests :: Gridworld
 add_executable("test-gridworld" tests/test-gridworld.cpp)

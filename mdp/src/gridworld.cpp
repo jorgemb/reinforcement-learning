@@ -97,7 +97,7 @@ void Gridworld::add_transition(const Gridworld::State &state, const Gridworld::A
     m_dynamics.emplace(state_action, transition_probability);
 }
 
-double Gridworld::expected_reward(const GridworldState &state, const GridworldAction &action) const {
+Gridworld::Reward Gridworld::expected_reward(const GridworldState &state, const GridworldAction &action) const {
     StateAction state_action{state, action};
     auto transition_count = m_dynamics.count(state_action);
 
@@ -124,7 +124,7 @@ double Gridworld::expected_reward(const GridworldState &state, const GridworldAc
     return expected_reward / total_probability;
 }
 
-double Gridworld::state_transition_probability(const GridworldState &from_state,
+Gridworld::Probability Gridworld::state_transition_probability(const GridworldState &from_state,
                                                const GridworldAction &action,
                                                const GridworldState &to_state) const {
     // Get all transitions from state-action pair
@@ -178,7 +178,7 @@ std::vector<Gridworld::Action> Gridworld::get_actions(const GridworldState &stat
     return {AvailableGridworldActions.begin(), AvailableGridworldActions.end()};
 }
 
-GreedyPolicy::GreedyPolicy(std::shared_ptr<Gridworld> gridworld, double gamma):
+GridworldGreedyPolicy::GridworldGreedyPolicy(std::shared_ptr<Gridworld> gridworld, double gamma):
 m_gridworld(std::move(gridworld)),
 m_rows(m_gridworld->get_rows()), m_columns(m_gridworld->get_columns()), m_gamma(gamma),
 m_value_function_table(m_rows * m_columns, 0.0) {
@@ -193,7 +193,7 @@ m_value_function_table(m_rows * m_columns, 0.0) {
     }
 }
 
-std::vector<GreedyPolicy::ActionProbability> GreedyPolicy::get_action_probabilities(const GridworldState &state) const {
+std::vector<GridworldGreedyPolicy::ActionProbability> GridworldGreedyPolicy::get_action_probabilities(const GridworldState &state) const {
     std::vector<ActionProbability> action_probability;
     std::transform(m_state_action_probability_map.at(state).cbegin(), m_state_action_probability_map.at(state).cend(),
                    std::back_inserter(action_probability), [](const auto& val){
@@ -203,11 +203,11 @@ std::vector<GreedyPolicy::ActionProbability> GreedyPolicy::get_action_probabilit
     return action_probability;
 }
 
-double GreedyPolicy::value_function(const GridworldState &state) const {
+double GridworldGreedyPolicy::value_function(const GridworldState &state) const {
     return value_from_table(state);
 }
 
-double GreedyPolicy::policy_evaluation() {
+double GridworldGreedyPolicy::policy_evaluation() {
     Probability delta = 0.0;
     auto states = m_gridworld->get_states();
     auto value_table_copy{ m_value_function_table };
@@ -236,7 +236,7 @@ double GreedyPolicy::policy_evaluation() {
     return delta;
 }
 
-void GreedyPolicy::update_policy() {
+void GridworldGreedyPolicy::update_policy() {
     // Iterate on each state-action
     for(const auto& s: m_gridworld->get_states()){
         Action best_action{};
@@ -266,6 +266,10 @@ void GreedyPolicy::update_policy() {
     }
 }
 
+std::shared_ptr<Gridworld> GridworldGreedyPolicy::get_gridworld() const{
+    return m_gridworld;
+}
+
 
 std::ostream &operator<<(std::ostream &os, const Gridworld::Action& action) {
     using Action = Gridworld::Action;
@@ -289,5 +293,41 @@ std::ostream &operator<<(std::ostream &os, const Gridworld::Action& action) {
 
 std::ostream &operator<<(std::ostream &os, const Gridworld::State& state) {
     os << "(" << state.row << "," << state.column << ")";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const GridworldGreedyPolicy &greedy_policy) {
+    auto gridworld = greedy_policy.get_gridworld();
+    for (size_t row = 0; row < gridworld->get_rows(); ++row) {
+        for (size_t col = 0; col < gridworld->get_columns(); ++col) {
+            Gridworld::State s{row, col};
+            auto actions = greedy_policy.get_action_probabilities(s);
+
+            // Print the best action
+            auto best_action = std::max_element(actions.cbegin(), actions.cend(),
+                                                [](const auto& a, const auto& b){
+                return a.second < b.second;
+            });
+
+            auto [action, probability] = *best_action;
+            switch (action) {
+                case rl::mdp::GridworldAction::LEFT:
+                    os << '<';
+                    break;
+                case rl::mdp::GridworldAction::RIGHT:
+                    os << '>';
+                    break;
+                case rl::mdp::GridworldAction::UP:
+                    os << '^';
+                    break;
+                case rl::mdp::GridworldAction::DOWN:
+                    os << 'v';
+                    break;
+            }
+        }
+        // Add newline at the end of the row
+        os << '\n';
+    }
+
     return os;
 }
