@@ -217,7 +217,7 @@ double GridworldGreedyPolicy::policy_evaluation() {
         Reward expected_value = 0.0;
         for(const auto& [a, p]: get_action_probabilities(s)){
             auto srp_list = m_gridworld->get_transitions(s, a);
-            Reward expected_reward = std::reduce(srp_list.cbegin(), srp_list.cend(), 0.0,
+            Reward expected_reward = std::accumulate(srp_list.cbegin(), srp_list.cend(), 0.0,
                                                [this](const auto& val, const auto& iter){
                 auto [s_i, reward, probability] = iter;
                 return val + probability * (reward + m_gamma * value_from_table(s_i));
