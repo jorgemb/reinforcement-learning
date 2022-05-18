@@ -45,6 +45,7 @@ namespace rl::mdp {
         auto operator==(const GridworldState &other) const { return row == other.row && column == other.column; }
     };
 
+    /// Represents a grid based MDP with transitions between cells
     class Gridworld: public MDP<GridworldState, GridworldAction> {
     public:
         using RandomEngine = std::default_random_engine;
@@ -87,6 +88,7 @@ namespace rl::mdp {
         /// \param state
         /// \param action
         /// \return
+        [[nodiscard]]
         Reward expected_reward(const State &state, const Action &action) const override;
 
         /// Returns probability of going to a state from a state-action pair.
@@ -94,6 +96,7 @@ namespace rl::mdp {
         /// \param action
         /// \param to_state
         /// \return
+        [[nodiscard]]
         Probability state_transition_probability(const State &from_state, const Action &action,
                                             const State &to_state) const override;
 
@@ -109,10 +112,28 @@ namespace rl::mdp {
         [[nodiscard]]
         std::vector<Action> get_actions(const State &state) const override;
 
+        /// Marks a state as a terminal state. This makes all transitions out of this state to point to it again
+        /// with reward zero.
+        /// \param s
+        void set_terminal_state(const State& s, const Reward& default_reward) override;
+
+        /// Returns true if the given State is a terminal state.
+        /// \param s
+        /// \return
+        [[nodiscard]]
+        bool is_terminal_state(const State& s) const override;
+
+        /// Returns a list of the terminal states.
+        /// \return
+        [[nodiscard]]
+        std::vector<State> get_terminal_states() const override;
+
     private:
         using DynamicsMap = std::multimap<StateAction, StateRewardProbability>;
         DynamicsMap m_dynamics;
         size_t m_rows, m_columns;
+
+        std::vector<State> m_terminal_states;
 
         /// Returns the default transition for the state-action pair
         /// \param state
@@ -137,6 +158,7 @@ namespace rl::mdp {
 
         /// Returns the gridworld associated to the policy.
         /// \return
+        [[nodiscard]]
         std::shared_ptr<Gridworld> get_gridworld() const;
 
         /// Approximates the value function doing a single policy evaluation.

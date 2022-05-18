@@ -111,6 +111,47 @@ TEST_CASE("Gridworld", "[gridworld]") {
         REQUIRE_THAT(g.get_transitions(from, action), matcher);
     }
 
+    SECTION("Terminal states"){
+        SECTION("Default non-terminal states"){
+            for(const auto& s: g.get_states()){
+                INFO("State: " << s);
+                REQUIRE_FALSE(g.is_terminal_state(s));
+            }
+        }
+
+        SECTION("Terminal state transitions"){
+            State terminal_state = {0 ,0};
+            g.set_terminal_state(terminal_state, 0.0);
+
+            REQUIRE(g.is_terminal_state(terminal_state));
+
+            // Check transitions
+            for(const auto& a: AvailableGridworldActions){
+                for(const auto& t: g.get_transitions(terminal_state, a)){
+                    auto [state, reward, probability] = t;
+                    REQUIRE(state == terminal_state);
+                    REQUIRE(reward == 0.0_a);
+                    REQUIRE(probability == 1.0_a);
+                }
+            }
+        }
+
+        SECTION("Terminal state list" ){
+            std::vector<State> terminal_list = {State{0,0}, State{1,1}, State{2,2}};
+            for(auto s: terminal_list) g.set_terminal_state(s, 0.0);
+
+            auto terminal_list_match = Catch::Matchers::UnorderedEquals(terminal_list);
+            REQUIRE_THAT(g.get_terminal_states(), terminal_list_match);
+        }
+
+        SECTION("Adding transition to terminal state"){
+            State terminal_state{1, 1};
+            g.set_terminal_state(terminal_state, 0.0);
+
+            REQUIRE_THROWS(g.add_transition(terminal_state, Action::RIGHT, State{0, 0}, 1.0, 1.0));
+        }
+    }
+
     SECTION("MDP values") {
         SECTION("Expected reward") {
             // Expected reward for default transition
@@ -231,17 +272,17 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
 
     SECTION("Expected values"){
         // Set the expected world
+        std::vector<State> terminal_states{State{0, 0}, State{3, 3}};
+        for(auto s: terminal_states) g->set_terminal_state(s, 1.0);
+
+        // Add transitions to all states
         for(const auto& s: g->get_states()){
             for(const auto& a: g->get_actions(s)){
-                // Check if it is terminal state or other
-                if(s == State{0, 0} || s == State{3, 3}){
-                    // Terminal state
-                    g->add_transition(s, a, s, 0.0, 1.0);
-                } else {
-                    // Other state
-                    auto [s_i, r, p] = g->get_transitions(s, a)[0];
-                    g->add_transition(s, a, s_i, -1.0, 1.0);
-                }
+                if(g->is_terminal_state(s)) continue;
+
+                // Add the transitions to the rest of the states
+                auto [s_i, reward, probability] = g->get_transitions(s, a)[0];
+                g->add_transition(s, a, s_i, -1.0, 1.0);
             }
         }
 
@@ -271,6 +312,23 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
             for(const auto& s: g->get_states()){
                 INFO("State: " << s << " value:" << policy.value_function(s));
                 REQUIRE(std::find(possible_values.cbegin(), possible_values.cend(), policy.value_function(s)) != possible_values.cend());
+            }
+
+            // k-evaluations
+            std::vector<std::vector<Approx>> expected_value_function{
+                    {0.0_a, -14.0_a, -20.0_a, -22.0_a},
+                    {-14.0_a, -18.0_a, -20.0_a, -20.0_a},
+                    {-20.0_a, -20.0_a, -18.0_a, -14.0_a},
+                    {-22.0_a, -20.0_a, -14.0_a, 0.0_a},
+            };
+            double error = 0.00001;
+            while(policy.policy_evaluation() > error);
+            for (size_t i = 0; i < g->get_rows(); ++i) {
+                for (size_t j = 0; j < g->get_columns(); ++j) {
+                    State s{i, j};
+                    INFO("State: " << s);
+                    REQUIRE(policy.value_function(s) == expected_value_function[i][j]);
+                }
             }
         }
 

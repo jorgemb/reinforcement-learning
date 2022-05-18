@@ -62,6 +62,20 @@ namespace rl::mdp{
         /// \return
         virtual std::vector<State> get_states() const = 0;
 
+        /// Marks a state as a terminal state. This makes all transitions out of this state to point to it again
+        /// with the given reward.
+        /// \param s
+        virtual void set_terminal_state(const State& s, const Reward& default_reward) = 0;
+
+        /// Returns true if the given State is a terminal state.
+        /// \param s
+        /// \return
+        virtual bool is_terminal_state(const State& s) const = 0;
+
+        /// Returns a list of the terminal states.
+        /// \return
+        virtual std::vector<State> get_terminal_states() const = 0;
+
         /// Returns a list with the available actions for a given state.
         /// \param state
         /// \return
@@ -100,6 +114,7 @@ namespace rl::mdp{
         /// \param reward
         virtual void add_transition_result(const TState& new_state, const TReward& reward) = 0;
     };
+
 
     template <class TState, class TAction, class TReward=double, class TProbability=double>
     class MDPPolicy{

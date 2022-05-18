@@ -91,6 +91,9 @@ Gridworld::transition_default(const Gridworld::State &state, const Gridworld::Ac
 void Gridworld::add_transition(const Gridworld::State &state, const Gridworld::Action &action,
                                const Gridworld::State &new_state, const Gridworld::Reward &reward,
                                const Gridworld::Probability &probability) {
+    // Check if it is a terminal state
+    if(is_terminal_state(state)) throw std::invalid_argument("Adding transition to terminal state");
+
     StateAction state_action{state, action};
     StateRewardProbability transition_probability{new_state, reward, probability};
 
@@ -178,6 +181,30 @@ std::vector<Gridworld::Action> Gridworld::get_actions(const GridworldState &stat
     return {AvailableGridworldActions.begin(), AvailableGridworldActions.end()};
 }
 
+void Gridworld::set_terminal_state(const GridworldState &s, const Reward& default_reward) {
+    // Check if it is already added
+    if(is_terminal_state(s)) return;
+
+    // Remove all transitions coming from this state, and add a single one that returns to the same state
+    for(const auto& action: AvailableGridworldActions){
+        auto [start, end] = m_dynamics.equal_range(StateAction{s, action});
+        m_dynamics.erase(start, end);
+
+        add_transition(s, action, s, default_reward, 1.0);
+    }
+
+    // Add the state to the terminal states list
+    m_terminal_states.push_back(s);
+}
+
+bool Gridworld::is_terminal_state(const GridworldState &s) const {
+    return std::find(m_terminal_states.cbegin(), m_terminal_states.cend(), s) != m_terminal_states.cend();
+}
+
+std::vector<Gridworld::State> Gridworld::get_terminal_states() const {
+    return m_terminal_states;
+}
+
 GridworldGreedyPolicy::GridworldGreedyPolicy(std::shared_ptr<Gridworld> gridworld, double gamma):
 m_gridworld(std::move(gridworld)),
 m_rows(m_gridworld->get_rows()), m_columns(m_gridworld->get_columns()), m_gamma(gamma),
@@ -214,6 +241,9 @@ double GridworldGreedyPolicy::policy_evaluation() {
 
     // Iterate on each state
     for(const auto& s: states){
+        // Skip terminal states
+        if(m_gridworld->is_terminal_state(s)) continue;
+
         Reward expected_value = 0.0;
         for(const auto& [a, p]: get_action_probabilities(s)){
             auto srp_list = m_gridworld->get_transitions(s, a);
