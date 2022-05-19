@@ -22,12 +22,12 @@ int main(){
 
             // Add the transitions to the rest of the states
             auto [s_i, reward, probability] = gridworld->get_transitions(s, a)[0];
-//            if(gridworld->is_terminal_state(s_i)){
-//                gridworld->add_transition(s, a, s_i, 1.0, 1.0);
-//            } else {
-//                gridworld->add_transition(s, a, s_i, -1.0, 1.0);
-//            }
+            if(gridworld->is_terminal_state(s_i)){
+                gridworld->add_transition(s, a, s_i, 1.0, 1.0);
+            } else {
                 gridworld->add_transition(s, a, s_i, -1.0, 1.0);
+            }
+//            gridworld->add_transition(s, a, s_i, -1.0, 1.0);
         }
     }
 
@@ -37,15 +37,11 @@ int main(){
 
     std::cout << "\nFirst evaluation\n";
     policy.policy_evaluation();
-//    policy.update_policy();
-    std::cout << policy << std::endl;
     print_value_function(gridworld, policy);
 
 
     std::cout << "\nSecond evaluation\n";
     policy.policy_evaluation();
-//    policy.update_policy();
-    std::cout << policy << std::endl;
     print_value_function(gridworld, policy);
 
     std::cout << "\nInf evaluation\n";
@@ -53,8 +49,8 @@ int main(){
     while(policy.policy_evaluation() >= 0.0001 && n++ < 1000){
         policy.policy_evaluation();
     }
-//    policy.update_policy();
-    fmt::print("...after {:d} iterations", n);
+    policy.update_policy();
+    fmt::print("...after {:d} iterations\n", n);
     std::cout << policy << std::endl;
     print_value_function(gridworld, policy);
 

@@ -72,17 +72,17 @@ namespace rl::mdp {
         [[nodiscard]]
         std::vector<StateRewardProbability> get_transitions(const State &state, const Action &action) const override;
 
-        /// Adds a transition with the given probability
+        /// Adds a transition with the given weight (NOTE: This is later normalized to sum 1)
         /// \param state
         /// \param action
         /// \param new_state
         /// \param reward
-        /// \param probability
+        /// \param weight
         void add_transition(const State &state,
                             const Action &action,
                             const State &new_state,
                             const Reward &reward,
-                            const Probability &probability) override;
+                            const Probability &weight) override;
 
         /// Returns the expected reward of the State-Action pair
         /// \param state

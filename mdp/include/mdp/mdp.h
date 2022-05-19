@@ -36,12 +36,12 @@ namespace rl::mdp{
         /// \param action
         /// \param new_state
         /// \param reward
-        /// \param probability
+        /// \param weight
         virtual void add_transition(const State& state,
                                     const Action& action,
                                     const State& new_state,
                                     const Reward& reward,
-                                    const Probability& probability) = 0;
+                                    const Probability& weight) = 0;
 
         /// Calculates the expected reward of a given State-Action pair
         /// \param state

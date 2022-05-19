@@ -90,12 +90,12 @@ Gridworld::transition_default(const Gridworld::State &state, const Gridworld::Ac
 
 void Gridworld::add_transition(const Gridworld::State &state, const Gridworld::Action &action,
                                const Gridworld::State &new_state, const Gridworld::Reward &reward,
-                               const Gridworld::Probability &probability) {
+                               const Gridworld::Probability &weight) {
     // Check if it is a terminal state
     if(is_terminal_state(state)) throw std::invalid_argument("Adding transition to terminal state");
 
     StateAction state_action{state, action};
-    StateRewardProbability transition_probability{new_state, reward, probability};
+    StateRewardProbability transition_probability{new_state, reward, weight};
 
     m_dynamics.emplace(state_action, transition_probability);
 }
