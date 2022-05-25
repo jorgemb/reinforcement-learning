@@ -127,6 +127,14 @@ namespace rl::mdp{
 
         using ActionProbability = std::pair<TAction, TProbability>;
 
+        /// Approximates the value function doing a single policy evaluation.
+        /// \param epsilon
+        /// \return
+        virtual double policy_evaluation() = 0;
+
+        /// Makes the policy greedy according to the value function
+        /// \return
+        virtual void update_policy() = 0;
 
         /// Return the possible actions and its probabilities based on the current state.
         /// \param state

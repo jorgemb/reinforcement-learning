@@ -5,6 +5,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <map>
 #include <iterator>
+#include <memory>
 #include <numeric>
 
 namespace rl::mdp {
@@ -213,6 +214,73 @@ namespace rl::mdp {
             }
         }
 
+    };
+
+    template <class TState, class TAction>
+    class GraphMDP_Greedy: MDPPolicy<TState, TAction>{
+    public:
+        // Class definitions
+        using typename MDPPolicy<TState, TAction>::State;
+        using typename MDPPolicy<TState, TAction>::Action;
+        using typename MDPPolicy<TState, TAction>::Reward;
+        using typename MDPPolicy<TState, TAction>::Probability;
+        using typename MDPPolicy<TState, TAction>::ActionProbability;
+
+        using PGraphMDP = std::shared_ptr<GraphMDP<TState, TAction>>;
+
+        /// Default constructor with pointer to graph
+        /// \param graph_mdp
+        /// \param gamma
+        GraphMDP_Greedy(PGraphMDP graph_mdp, double gamma): m_graph_mdp(graph_mdp), m_gamma(gamma) {
+            auto actions = get_actions_list<Action>();
+            Probability default_probability = 1.0 / static_cast<Probability>(actions.size());
+
+            // Create default action_probability list
+            std::vector<ActionProbability> default_action_probability;
+            std::transform(actions.cbegin(), actions.cend(), std::back_inserter(default_action_probability),
+                           [default_probability](const auto& a){
+                return ActionProbability{a, default_probability};
+            });
+
+            // Add one for each element in the list
+            for(const auto& state: graph_mdp->get_states()){
+                m_state_action_map[state] = default_action_probability;
+            }
+        }
+
+        /// Return the possible actions and its probabilities based on the current state.
+        /// \param state
+        /// \return
+        std::vector<ActionProbability> get_action_probabilities(const State& state) const override{
+            return {};
+        }
+
+        /// Returns the value function result given a state.
+        /// \param state
+        /// \return
+        Reward value_function(const State& state) const override{
+            return {};
+        }
+
+        /// Approximates the value function doing a single policy evaluation.
+        /// \param epsilon
+        /// \return
+        double policy_evaluation() override{
+            return {};
+        }
+
+        /// Makes the policy greedy according to the value function
+        /// \return
+        void update_policy() override{
+
+        }
+
+    private:
+        using ActionProbabilityList = std::vector<ActionProbability>;
+        std::map<State, ActionProbabilityList> m_state_action_map;
+        double m_gamma;
+
+        PGraphMDP m_graph_mdp;
     };
 
 } // rl::mdp

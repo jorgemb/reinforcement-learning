@@ -7,6 +7,7 @@
 
 using namespace Catch::literals;
 using rl::mdp::GraphMDP;
+using rl::mdp::GraphMDP_Greedy;
 
 using State = std::string;
 enum class GraphAction{ LEFT, RIGHT };
@@ -134,6 +135,34 @@ TEST_CASE("GraphMDP", "[graphmdp]") {
             std::vector<State> expected_terminal_states{"C", "D"};
             auto expected_terminal_matcher = Catch::Matchers::UnorderedEquals(expected_terminal_states);
             REQUIRE_THAT(g.get_terminal_states(), expected_terminal_matcher);
+        }
+    }
+}
+
+TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
+    // Set up the graph MDP
+    auto g = std::make_shared<GraphMDP<State,Action>>();
+
+    std::array<State, 6> states{"BAD", "A", "B", "C", "D", "GOOD"};
+    auto node_iter = states.begin(), next_node_iter = std::next(states.begin());
+    for(; next_node_iter != states.end(); ++node_iter, ++next_node_iter){
+        double r = *next_node_iter == "GOOD" ? 1.0 : 0.0;
+
+        g->add_transition(*node_iter, Action::RIGHT, *next_node_iter, r, 1.0);
+        g->add_transition(*next_node_iter, Action::LEFT, *node_iter, 0.0, 1.0);
+    }
+    g->set_terminal_state("BAD", 0.0);
+    g->set_terminal_state("GOOD", 0.0);
+
+    // Policy
+    GraphMDP_Greedy<State, Action> policy(g, 1.0);
+
+    SECTION("Default probabilities"){
+        auto default_probability = Approx(1.0 / static_cast<double>(rl::mdp::get_actions_list<Action>().size()));
+        for(const auto& s: states){
+            for(const auto& [a, p]: policy.get_action_probabilities(s)){
+                REQUIRE(p == default_probability);
+            }
         }
     }
 }

@@ -163,11 +163,11 @@ namespace rl::mdp {
         /// Approximates the value function doing a single policy evaluation.
         /// \param epsilon
         /// \return
-        double policy_evaluation();
+        double policy_evaluation() override;
 
         /// Makes the policy greedy according to the value function
         /// \return
-        void update_policy();
+        void update_policy() override;
 
         /// Returns the value function result given a state.
         /// \param state
