@@ -178,7 +178,7 @@ std::vector<Gridworld::State> Gridworld::get_states() const {
 }
 
 std::vector<Gridworld::Action> Gridworld::get_actions(const GridworldState &state) const {
-    return {AvailableGridworldActions.begin(), AvailableGridworldActions.end()};
+    return get_actions_list<GridworldAction>();
 }
 
 void Gridworld::set_terminal_state(const GridworldState &s, const Reward& default_reward) {
@@ -186,7 +186,7 @@ void Gridworld::set_terminal_state(const GridworldState &s, const Reward& defaul
     if(is_terminal_state(s)) return;
 
     // Remove all transitions coming from this state, and add a single one that returns to the same state
-    for(const auto& action: AvailableGridworldActions){
+    for(const auto& action: get_actions_list<GridworldAction>()){
         auto [start, end] = m_dynamics.equal_range(StateAction{s, action});
         m_dynamics.erase(start, end);
 

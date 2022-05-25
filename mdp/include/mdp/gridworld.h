@@ -16,6 +16,7 @@
 #include <memory>
 
 namespace rl::mdp {
+    /// Actions for the Gridworld
     enum class GridworldAction {
         LEFT,
         RIGHT,
@@ -23,12 +24,10 @@ namespace rl::mdp {
         DOWN
     };
 
-    inline const std::array<GridworldAction, 4> AvailableGridworldActions{
-        GridworldAction::LEFT,
-        GridworldAction::RIGHT,
-        GridworldAction::UP,
-        GridworldAction::DOWN
-    };
+    template<>
+    inline std::vector<GridworldAction> get_actions_list() {
+        return {GridworldAction::LEFT, GridworldAction::RIGHT, GridworldAction::UP, GridworldAction::DOWN};
+    }
 
     /// Class for representing the current state in Gridworld
     class GridworldState {
