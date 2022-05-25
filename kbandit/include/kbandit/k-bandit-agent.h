@@ -53,7 +53,7 @@ public:
     using RandomEngine = std::default_random_engine;
 
 	BasicGreedyAgent(size_t bandits, double epsilon, double initial_estimate = std::numeric_limits<double>::infinity(),
-                     RandomEngine::result_type seed = std::numeric_limits<RandomEngine::result_type>::max());
+                     RandomEngine::result_type seed = 0);
 	size_t get_selection() const override;
 	size_t get_best_bandit() const override;
 	void add_reward(size_t selection, double reward) override;

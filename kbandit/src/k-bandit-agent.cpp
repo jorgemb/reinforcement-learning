@@ -17,9 +17,9 @@ size_t KBanditsAgent::total_bandits() const {
 
 BasicGreedyAgent::BasicGreedyAgent(size_t bandits, double epsilon, double initial_estimate, RandomEngine::result_type seed):
 	KBanditsAgent(bandits), m_bandit_distribution(0, bandits-1), m_greedy_option_distribution(1-epsilon),
-    m_steps_per_bandit(bandits, 0), m_expected_rewards(bandits, initial_estimate)
+    m_steps_per_bandit(bandits, 0), m_expected_rewards(bandits, initial_estimate), m_engine(seed)
 {
-    if(seed == std::numeric_limits<RandomEngine::result_type>::max()){
+    if(seed == 0){
         std::random_device random_device;
         m_engine.seed( random_device());
     }

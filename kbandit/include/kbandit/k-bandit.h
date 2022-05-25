@@ -8,7 +8,7 @@
 /// Creates a new random engine with the given seed or with a random one
 /// \param seed
 /// \return
-std::default_random_engine create_random_engine(std::default_random_engine::result_type seed = std::numeric_limits<std::default_random_engine::result_type>::max());
+std::default_random_engine create_random_engine(std::default_random_engine::result_type seed = 0);
 
 class Bandit {
 public:

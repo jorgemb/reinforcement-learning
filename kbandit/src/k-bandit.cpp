@@ -8,15 +8,11 @@
 std::default_random_engine create_random_engine(std::default_random_engine::result_type seed) {
 	// Determine seed
 	using Engine = std::default_random_engine;
-	Engine engine;
-	if (seed == std::numeric_limits<typename Engine::result_type>::max()) {
+	Engine engine(seed);
+	if (seed == 0) {
 		// Create a new seed
 		std::random_device dev;
 		engine.seed(dev());
-	}
-	else {
-		// Use given seed
-		engine.seed(seed);
 	}
 
 	return engine;

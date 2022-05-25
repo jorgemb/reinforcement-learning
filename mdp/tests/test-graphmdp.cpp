@@ -2,8 +2,6 @@
 
 #define CATCH_CONFIG_MAIN
 #include "catch2/catch.hpp"
-#include <array>
-#include <algorithm>
 #include <numeric>
 #include <vector>
 
@@ -31,9 +29,9 @@ TEST_CASE("GraphMDP", "[graphmdp]") {
     std::vector<State> states{"Bad", "A", "B", "C", "D", "E", "Good"};
 
     SECTION("Default values") {
-        REQUIRE(g.get_states().size() == 0);
-        REQUIRE_THROWS(g.get_actions("ANY").size() == 0);
-        REQUIRE_THROWS(g.get_transitions("ANY", Action::RIGHT).size() == 0);
+        REQUIRE(g.get_states().empty());
+        REQUIRE_THROWS(g.get_actions("ANY").empty());
+        REQUIRE_THROWS(g.get_transitions("ANY", Action::RIGHT).empty());
     }
 
     SECTION("States"){

@@ -339,7 +339,6 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
 
             // Verify actions
             using ActionList = std::vector<Action>;
-            using Line = std::vector<ActionList>;
             for(const auto& s: g->get_states()){
                 for(const auto& [a, p]: policy.get_action_probabilities(s)){
                     if(p == 0.0_a) continue;
