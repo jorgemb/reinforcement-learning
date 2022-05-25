@@ -14,6 +14,11 @@ using State = std::string;
 enum class GraphAction{ LEFT, RIGHT };
 using Action = GraphAction;
 
+template<>
+std::vector<GraphAction> rl::mdp::get_actions_list() {
+    return {GraphAction::LEFT, GraphAction::RIGHT};
+}
+
 std::ostream& operator<<(std::ostream& os, const Action& a){
     if(a == Action::LEFT) os << "LEFT";
     else os << "RIGHT";
@@ -22,7 +27,7 @@ std::ostream& operator<<(std::ostream& os, const Action& a){
 }
 
 TEST_CASE("GraphMDP", "[graphmdp]") {
-    GraphMDP<State, Action> g({Action::LEFT, Action::RIGHT});
+    GraphMDP<State, Action> g;
     std::vector<State> states{"BAD", "A", "B", "C", "D", "E", "GOOD"};
 
     SECTION("Default values") {
@@ -42,30 +47,6 @@ TEST_CASE("GraphMDP", "[graphmdp]") {
         REQUIRE(g.get_states().size() == states.size());
         auto state_match = Catch::Matchers::UnorderedEquals(states);
         REQUIRE_THAT(g.get_states(), state_match);
-
-        // Terminal states
-        State terminal{"BAD"};
-        REQUIRE_THROWS(g.set_terminal_state("ANY", 0.0));
-        REQUIRE_FALSE(g.is_terminal_state(terminal));
-        g.set_terminal_state(terminal, -10.0);
-        REQUIRE(g.is_terminal_state(terminal));
-        for(const auto& a: {Action::LEFT, Action::RIGHT}){
-            auto transitions = g.get_transitions(terminal, a);
-            REQUIRE(transitions.size() == 1);
-            auto [s, r, p] = transitions[0];
-            REQUIRE(s == terminal);
-            REQUIRE(r == -10.0_a);
-            REQUIRE(p == 1.0_a);
-        }
-
-        // Adding transitions to terminal states is illegal
-        REQUIRE_THROWS(g.add_transition(terminal, Action::LEFT, "A", 1.0, 1.0));
-
-        // Check terminal states list
-        std::vector<State> terminal_states{"BAD", "GOOD"};
-        for(auto s: terminal_states) g.set_terminal_state(s, 0.0);
-        auto terminal_match = Catch::Matchers::UnorderedEquals(terminal_states);
-        REQUIRE_THAT(g.get_terminal_states(), terminal_match);
     }
 
     SECTION("Transitions") {
@@ -109,22 +90,52 @@ TEST_CASE("GraphMDP", "[graphmdp]") {
         }
 
         SECTION("Transition probability"){
-            g.add_transition(A, Action::RIGHT, A, 10.0, 3.0);
-            g.add_transition(A, Action::RIGHT, B, 10.0, 1.0);
-            g.add_transition(A, Action::RIGHT, B, 10.0, 1.0);
-
-            REQUIRE(g.state_transition_probability(A, Action::RIGHT, B) == 0.40_a);
+            g.add_transition("A", Action::LEFT, "B", 100.0, 2);
+            g.add_transition("A", Action::LEFT, "B", 30.0, 1);
+            g.add_transition("A", Action::LEFT, "A", 10.0, 7);
+            REQUIRE(g.state_transition_probability("A", Action::LEFT, "B") == 0.3_a);
+            REQUIRE(g.state_transition_probability("B", Action::RIGHT, "A") == 0.0_a);
         }
     }
 
-    SECTION("Reward"){
-        State A{"A"}, B{"B"}, C{"C"};
-        g.add_transition(A, Action::LEFT, A, -10, 0.25);
-        g.add_transition(A, Action::LEFT, B, 50, 0.50);
-        g.add_transition(A, Action::LEFT, C, 5, 0.25);
+    SECTION("Expected reward"){
+        g.add_transition("A", Action::LEFT, "B", 100.0, 3);
+        g.add_transition("A", Action::LEFT, "A", 10.0, 7);
 
-        double expected_reward = -10.0*0.25 + 50*0.5 + 5*0.25;
-        REQUIRE(g.expected_reward(A, Action::LEFT) == Approx(expected_reward));
+        REQUIRE(g.expected_reward("A", Action::LEFT) == Approx(100.0 * 0.3 + 10.0 * 0.7));
     }
 
+    SECTION("Terminal states"){
+        g.add_transition("A", Action::RIGHT, "B", 10, 1);
+        g.add_transition("B", Action::RIGHT, "C", 10, 1);
+        g.add_transition("B", Action::RIGHT, "D", 10, 1);
+        g.set_terminal_state("C", 10.0);
+        g.set_terminal_state("D", 0.0);
+
+        SECTION("Is terminal") {
+            REQUIRE_FALSE(g.is_terminal_state("A"));
+            REQUIRE_FALSE(g.is_terminal_state("B"));
+            REQUIRE(g.is_terminal_state("C"));
+        }
+
+        SECTION("Transitions") {
+            for (const auto &a: rl::mdp::get_actions_list<Action>()) {
+                auto transitions = g.get_transitions("C", a);
+                REQUIRE(transitions.size() == 1);
+
+                auto [s, r, p] = transitions[0];
+                REQUIRE(s == "C");
+                REQUIRE(r == 10.0_a);
+                REQUIRE(p == 1.0_a);
+            }
+
+            REQUIRE_THROWS(g.add_transition("C", Action::RIGHT, "A", 1.0, 1.0));
+        }
+
+        SECTION("List") {
+            std::vector<State> expected_terminal_states{"C", "D"};
+            auto expected_terminal_matcher = Catch::Matchers::UnorderedEquals(expected_terminal_states);
+            REQUIRE_THAT(g.get_terminal_states(), expected_terminal_matcher);
+        }
+    }
 }

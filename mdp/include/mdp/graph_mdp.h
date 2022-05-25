@@ -5,6 +5,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <map>
 #include <iterator>
+#include <numeric>
 
 namespace rl::mdp {
     /// Class for representing an MDP that uses a graph as underlying type
@@ -23,7 +24,7 @@ namespace rl::mdp {
 
         /// Constructor accepting list of available actions
         /// \param available_actions
-        GraphMDP(std::initializer_list<Action> available_actions): m_available_actions(std::move(available_actions)) {}
+        GraphMDP(): m_available_actions(get_actions_list<TAction>()) {}
 
         /// Returns a transitions from a State-Action pair
         /// \param state
@@ -71,6 +72,9 @@ namespace rl::mdp {
                                     const State& new_state,
                                     const Reward& reward,
                                     const Probability& weight) override{
+            // Cannot add transition to terminal states
+            if(is_terminal_state(state)) throw std::invalid_argument("Adding transition to terminal state");
+
             // Get vertices
             GraphVertex A = get_or_create_vertex(state);
             GraphVertex B = get_or_create_vertex(new_state);
@@ -84,7 +88,12 @@ namespace rl::mdp {
         /// \param action
         /// \return
         Reward expected_reward(const State& state, const Action& action) const override{
-            return {};
+            Reward expected_reward{};
+            for(const auto& [s, r, p]: get_transitions(state, action)){
+                expected_reward += r * p;
+            }
+
+            return expected_reward;
         }
 
         /// Probability of going to a given state from a state-action pair
@@ -95,7 +104,14 @@ namespace rl::mdp {
         Probability state_transition_probability(const State& from_state,
                                                          const Action& action,
                                                          const State& to_state) const override{
-            return {};
+            Probability prob{};
+            for(const auto& [s, r, p]: get_transitions(from_state, action)){
+                if(s == to_state){
+                    prob += p;
+                }
+            }
+
+            return prob;
         }
 
         /// Returns a vector with all the possible states that the MDP can contain.
@@ -114,20 +130,31 @@ namespace rl::mdp {
         /// with the given reward.
         /// \param s
         void set_terminal_state(const State& s, const Reward& default_reward) override{
-            return;
+            // Initial check
+            if(is_terminal_state(s)) return;
+
+            // Remove all outgoing transitions and set only transitions to itself
+            auto v = m_state_to_vertex.at(s);
+            boost::clear_out_edges(v, m_dynamics);
+            for(const auto& a: m_available_actions){
+                add_transition(s, a, s, default_reward, 1.0);
+            }
+
+            // Add to list of terminal states
+            m_terminal_states.insert(s);
         }
 
         /// Returns true if the given State is a terminal state.
         /// \param s
         /// \return
         bool is_terminal_state(const State& s) const override{
-            return {};
+            return m_terminal_states.find(s) != m_terminal_states.end();
         }
 
         /// Returns a list of the terminal states.
         /// \return
         std::vector<State> get_terminal_states() const override{
-            return {};
+            return {m_terminal_states.begin(), m_terminal_states.end()};
         }
 
         /// Returns a list with the available actions for a given state.
@@ -166,7 +193,8 @@ namespace rl::mdp {
         // Internal data
         Graph m_dynamics;
         std::map<State, GraphVertex> m_state_to_vertex;
-        std::vector<Action> m_available_actions;
+        const std::vector<Action> m_available_actions;
+        std::set<State> m_terminal_states;
 
     private:
         /// Gets or creates a new vertex in the graph, maintaining the state-vertex map
@@ -184,6 +212,7 @@ namespace rl::mdp {
                 return iter->second;
             }
         }
+
     };
 
 } // rl::mdp
