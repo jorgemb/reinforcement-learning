@@ -26,7 +26,7 @@ std::ostream& operator<<(std::ostream& os, const Action& a){
 
 TEST_CASE("GraphMDP", "[graphmdp]") {
     GraphMDP<State, Action> g;
-    std::vector<State> states{"Bad", "A", "B", "C", "D", "E", "Good"};
+    std::vector<State> states{"BAD", "A", "B", "C", "D", "E", "GOOD"};
 
     SECTION("Default values") {
         REQUIRE(g.get_states().empty());
@@ -36,13 +36,12 @@ TEST_CASE("GraphMDP", "[graphmdp]") {
 
     SECTION("States"){
         // Insert a transition over every pair of states
-        std::vector<State> _ignore;
-        std::adjacent_difference(states.cbegin(), states.cend(), std::back_inserter(_ignore),
-                                 [&g](const auto& sA, const auto& sB){
-            g.add_transition(sA, Action::RIGHT, sB, 10.0, 1.0);
-            return sA;
-        });
+        auto iter_a = states.begin(), iter_b = std::next(iter_a), iter_end = states.end();
+        for(; iter_b != iter_end; ++iter_a, ++iter_b){
+            g.add_transition(*iter_a, Action::RIGHT, *iter_b, 10.0, 1.0);
+        }
 
+        // Default size
         REQUIRE(g.get_states().size() == states.size());
         auto state_match = Catch::Matchers::UnorderedEquals(states);
         REQUIRE_THAT(g.get_states(), state_match);
