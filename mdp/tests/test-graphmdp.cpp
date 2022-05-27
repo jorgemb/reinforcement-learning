@@ -143,7 +143,8 @@ TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
     // Set up the graph MDP
     auto g = std::make_shared<GraphMDP<State,Action>>();
 
-    std::array<State, 6> states{"BAD", "A", "B", "C", "D", "GOOD"};
+    // According to Example 6.2 from RL Book
+    std::array<State, 7> states{"BAD", "A", "B", "C", "D", "E", "GOOD"};
     auto node_iter = states.begin(), next_node_iter = std::next(states.begin());
     for(; next_node_iter != states.end(); ++node_iter, ++next_node_iter){
         double r = *next_node_iter == "GOOD" ? 1.0 : 0.0;
@@ -157,11 +158,98 @@ TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
     // Policy
     GraphMDP_Greedy<State, Action> policy(g, 1.0);
 
-    SECTION("Default probabilities"){
-        auto default_probability = Approx(1.0 / static_cast<double>(rl::mdp::get_actions_list<Action>().size()));
-        for(const auto& s: states){
-            for(const auto& [a, p]: policy.get_action_probabilities(s)){
-                REQUIRE(p == default_probability);
+    SECTION("Default values"){
+        SECTION("Probabilities") {
+            auto default_probability = Approx(1.0 / static_cast<double>(rl::mdp::get_actions_list<Action>().size()));
+            for (const auto &s: states) {
+                // Terminal states should not have probabilities
+                if(g->is_terminal_state(s)){
+                    REQUIRE_THROWS(policy.get_action_probabilities(s));
+                    continue;
+                }
+
+                auto action_probabilities = policy.get_action_probabilities(s);
+                REQUIRE_FALSE(action_probabilities.empty());
+                for (const auto &[a, p]: action_probabilities) {
+                    REQUIRE(p == default_probability);
+                }
+            }
+        }
+
+        SECTION("Value function)"){
+            for (const auto& s: states) {
+                REQUIRE(policy.value_function(s) == 0.0_a);
+            }
+        }
+    }
+
+    SECTION("Policy iteration"){
+        SECTION("1st iteration"){
+            // Evaluation
+            auto change = policy.policy_evaluation();
+            REQUIRE(change == 0.5_a);
+            for(const auto& s: states){
+                auto value_function = policy.value_function(s);
+                if(g->is_terminal_state(s)){
+                    REQUIRE(value_function == 0.0_a);
+                }else if(s == "E"){
+                    REQUIRE(value_function == 0.5_a);
+                } else {
+                    REQUIRE(value_function == 0.0_a);
+                }
+            }
+
+            // Make greedy
+            policy.update_policy();
+            for(const auto& s: states){
+                if(g->is_terminal_state(s)) continue;
+                INFO("State is " << s);
+
+                auto action_prob = policy.get_action_probabilities(s);
+                if(s == "E" || s == "D"){
+                    for(const auto&[a, p]: action_prob){
+                        if(a == Action::RIGHT) REQUIRE(p == 1.0_a);
+                        if(a == Action::LEFT) REQUIRE(p == 0.0_a);
+                    }
+                } else {
+                    for(const auto& [a, p]: action_prob){
+                        INFO("Action is " << a);
+                        REQUIRE(p == 0.5_a);
+                    }
+                }
+            }
+        }
+
+        SECTION("Final iteration"){
+            const double min_change = 0.1;
+            double last_change = std::numeric_limits<double>::infinity();
+            size_t iterations = 0;
+            while(last_change > min_change){
+                last_change = policy.policy_evaluation();
+                INFO("Last change: " << last_change);
+                INFO("Iterations: " << iterations);
+//                REQUIRE(last_change < 1.0);
+                ++iterations;
+            }
+            INFO("Iterations: " << iterations);
+
+            std::map<State, double> expected_values{
+                    {"A", 1.0 / 6.0},
+                    {"B", 2.0 / 6.0},
+                    {"C", 3.0 / 6.0},
+                    {"D", 4.0 / 6.0},
+                    {"E", 5.0 / 6.0}
+            };
+            std::vector<std::pair<Action, double>> expected_actions{
+                std::make_pair(Action::LEFT, 0.0),
+                std::make_pair(Action::RIGHT, 1.0)
+            };
+            auto actions_matcher = Catch::UnorderedEquals(expected_actions);
+
+            for(const auto& [s, val]: expected_values){
+                INFO("State is " << s);
+                REQUIRE(policy.value_function(s) == Approx(val));
+                REQUIRE_THAT(policy.get_action_probabilities(s), actions_matcher);
             }
         }
     }
