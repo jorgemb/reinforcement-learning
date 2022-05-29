@@ -200,7 +200,7 @@ TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
             }
 
             // Make greedy
-            policy.update_policy();
+            REQUIRE(policy.update_policy());
             for(const auto& s: states){
                 if(g->is_terminal_state(s)) continue;
                 INFO("State is " << s);
@@ -221,35 +221,40 @@ TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
         }
 
         SECTION("Final iteration"){
-            const double min_change = 0.1;
-            double last_change = std::numeric_limits<double>::infinity();
+            // Iterate until there are no more policy changes
+            bool policy_changed = true;
             size_t iterations = 0;
-            while(last_change > min_change){
-                last_change = policy.policy_evaluation();
-                INFO("Last change: " << last_change);
-                INFO("Iterations: " << iterations);
-//                REQUIRE(last_change < 1.0);
+            while(policy_changed || iterations < 10){
+                policy.policy_evaluation();
+                policy_changed = policy.update_policy();
                 ++iterations;
             }
-            INFO("Iterations: " << iterations);
+            INFO("Total iterations: " << iterations);
 
-            std::map<State, double> expected_values{
-                    {"A", 1.0 / 6.0},
-                    {"B", 2.0 / 6.0},
-                    {"C", 3.0 / 6.0},
-                    {"D", 4.0 / 6.0},
-                    {"E", 5.0 / 6.0}
-            };
-            std::vector<std::pair<Action, double>> expected_actions{
+            // Value function
+            INFO("BAD - " << policy.value_function("BAD"));
+            INFO("A - " << policy.value_function("A"));
+            INFO("B - " << policy.value_function("B"));
+            INFO("C - " << policy.value_function("C"));
+            INFO("D - " << policy.value_function("D"));
+            INFO("E - " << policy.value_function("E"));
+            INFO("GOOD - " << policy.value_function("GOOD"));
+
+
+           std::vector<std::pair<Action, double>> expected_actions{
                 std::make_pair(Action::LEFT, 0.0),
                 std::make_pair(Action::RIGHT, 1.0)
             };
             auto actions_matcher = Catch::UnorderedEquals(expected_actions);
 
-            for(const auto& [s, val]: expected_values){
+            for(const auto& s: states){
+                if(g->is_terminal_state(s)) continue;
+
                 INFO("State is " << s);
-                REQUIRE(policy.value_function(s) == Approx(val));
-                REQUIRE_THAT(policy.get_action_probabilities(s), actions_matcher);
+                auto action_probabilities = policy.get_action_probabilities(s);
+                INFO(action_probabilities[0].first << " - " << action_probabilities[0].second);
+                INFO(action_probabilities[1].first << " - " << action_probabilities[1].second);
+                REQUIRE_THAT(action_probabilities, actions_matcher);
             }
         }
     }

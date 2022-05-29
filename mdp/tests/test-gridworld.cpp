@@ -5,6 +5,7 @@
 #include <array>
 #include <algorithm>
 #include <vector>
+#include <iterator>
 
 using namespace Catch::literals;
 using rl::mdp::Gridworld;
@@ -233,6 +234,12 @@ TEST_CASE("Gridworld", "[gridworld]") {
 
 using ActionProbability = rl::mdp::GridworldGreedyPolicy::ActionProbability;
 
+std::ostream& operator<<(std::ostream& os, const ActionProbability& ap){
+    auto [a, p] = ap;
+    os << "{" << a << "," << p << "}";
+    return os;
+}
+
 TEST_CASE("Gridworld Policy", "[gridworld]"){
     // Initialize elements
     size_t rows = 4, columns = 4;
@@ -272,7 +279,7 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
 
     SECTION("Expected values"){
         // Set the expected world
-        std::vector<State> terminal_states{State{0, 0}, State{3, 3}};
+        std::set<State> terminal_states{State{0, 0}, State{3, 3}};
         for(auto s: terminal_states) g->set_terminal_state(s, 1.0);
 
         // Add transitions to all states
@@ -335,27 +342,100 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
         SECTION("Policy improvement"){
             rl::mdp::GridworldGreedyPolicy policy(g, 1.0);
             policy.policy_evaluation();
-            policy.update_policy();
+            REQUIRE(policy.update_policy());
 
             // Verify actions
             using ActionList = std::vector<Action>;
-            for(const auto& s: g->get_states()){
-                for(const auto& [a, p]: policy.get_action_probabilities(s)){
-                    if(p == 0.0_a) continue;
-                    INFO("State: " << s);
-                    INFO("Probability: " << p);
+            std::vector<ActionProbability> expected_default_probabilities{
+                std::make_pair(Action::LEFT, 0.25),
+                std::make_pair(Action::RIGHT, 0.25),
+                std::make_pair(Action::UP, 0.25),
+                std::make_pair(Action::DOWN, 0.25),
+            };
+            auto expected_default_match = Catch::Matchers::UnorderedEquals(expected_default_probabilities);
+            auto max_ap_predicate = [](const ActionProbability& ap1, const ActionProbability& ap2){
+                return ap1.second < ap2.second;
+            };
 
-                    // Check type of state
-                    if(s == State{0, 1}){
-                        REQUIRE(a == Action::LEFT);
-                    } else if(s == State{1, 0}){
-                        REQUIRE(a == Action::UP);
-                    } else if(s == State{3, 2}){
-                        REQUIRE(a == Action::RIGHT);
-                    } else if(s == State{2, 3}){
-                        REQUIRE(a == Action::DOWN);
-                    }
+            for(const auto& s: g->get_states()) {
+                INFO("State: " << s);
+                auto action_probabilities = policy.get_action_probabilities(s);
+                auto best_ap  = std::max_element(action_probabilities.begin(), action_probabilities.end(),
+                                                 max_ap_predicate);
+                auto [best_a, best_p] = *best_ap;
+
+                if (s == State{0, 1}) {
+                    REQUIRE(best_a == Action::LEFT);
+                } else if (s == State{1, 0}) {
+                    REQUIRE(best_a == Action::UP);
+                } else if (s == State{3, 2}) {
+                    REQUIRE(best_a == Action::RIGHT);
+                } else if (s == State{2, 3}) {
+                    REQUIRE(best_a == Action::DOWN);
+                } else {
+                    REQUIRE_THAT(action_probabilities, expected_default_match);
                 }
+            }
+        }
+
+        SECTION("Generalized policy iteration"){
+            rl::mdp::GridworldGreedyPolicy policy(g, 1.0);
+
+            // Do policy iteration until the best is found
+            bool policy_changed = true;
+            double epsilon = 0.00001;
+            while(policy_changed){
+                // Do policy evaluation
+                while(policy.policy_evaluation() > epsilon);
+                policy_changed = policy.update_policy();
+            }
+
+            // Create matchers for policy
+            using APList = std::vector<ActionProbability>;
+
+            APList left{ {Action::LEFT, 1.0}, {Action::RIGHT, 0.0}, {Action::UP, 0.0}, {Action::DOWN, 0.0}};
+            APList right{ {Action::LEFT, 0.0}, {Action::RIGHT, 1.0}, {Action::UP, 0.0}, {Action::DOWN, 0.0}};
+            APList down{ {Action::LEFT, 0.0}, {Action::RIGHT, 0.0}, {Action::UP, 0.0}, {Action::DOWN, 1.0}};
+            APList up{ {Action::LEFT, 0.0}, {Action::RIGHT, 0.0}, {Action::UP, 1.0}, {Action::DOWN, 0.0}};
+            APList left_up{ {Action::LEFT, 0.5}, {Action::RIGHT, 0.0}, {Action::UP, 0.5}, {Action::DOWN, 0.0}};
+            APList left_down{ {Action::LEFT, 0.5}, {Action::RIGHT, 0.0}, {Action::UP, 0.0}, {Action::DOWN, 0.5}};
+            APList right_up{ {Action::LEFT, 0.0}, {Action::RIGHT, 0.5}, {Action::UP, 0.5}, {Action::DOWN, 0.0}};
+            APList right_down{ {Action::LEFT, 0.0}, {Action::RIGHT, 0.5}, {Action::UP, 0.0}, {Action::DOWN, 0.5}};
+            APList any{ {Action::LEFT, 0.25}, {Action::RIGHT, 0.25}, {Action::UP, 0.25}, {Action::DOWN, 0.25}};
+
+            // Create expected policy
+            std::map<State, APList> expected_policy{
+                    {{0,1}, left},
+                    {{0,2}, left},
+                    {{0,3}, left_down},
+                    {{1,0}, up},
+                    {{1,1}, left_up},
+                    {{1,2}, any},
+                    {{1,3}, down},
+                    {{2,0}, up},
+                    {{2,1}, any},
+                    {{2,2}, right_down},
+                    {{2,3}, down},
+                    {{3,0}, right_up},
+                    {{3,1}, right},
+                    {{3,2}, right},
+            };
+
+            // Check the final policy
+            INFO(policy);
+
+            auto match = [](const APList& real, const APList& target){
+                auto matcher = Catch::Matchers::UnorderedEquals(target);
+                INFO(real[0].first << " - " << real[0].second);
+                INFO(real[1].first << " - " << real[1].second);
+                INFO(real[2].first << " - " << real[2].second);
+                INFO(real[3].first << " - " << real[3].second);
+                CHECK_THAT(real, matcher);
+            };
+
+            for(const auto& [state, expected]: expected_policy){
+                INFO("State: " << state);
+                match(policy.get_action_probabilities(state), expected);
             }
         }
     }

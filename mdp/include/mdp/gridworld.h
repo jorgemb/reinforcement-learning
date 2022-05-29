@@ -166,8 +166,8 @@ namespace rl::mdp {
         double policy_evaluation() override;
 
         /// Makes the policy greedy according to the value function
-        /// \return
-        void update_policy() override;
+        /// \return True if the policy changed
+        bool update_policy() override;
 
         /// Returns the value function result given a state.
         /// \param state

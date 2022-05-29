@@ -275,7 +275,7 @@ namespace rl::mdp {
         double policy_evaluation() override{
             // Copy value function
             auto value_function_copy(m_value_function);
-            Reward max_change{};
+            Reward delta{};
 
             // Iterate through states
             for(auto v_iter=value_function_copy.begin(); v_iter != value_function_copy.end(); ++v_iter){
@@ -299,43 +299,50 @@ namespace rl::mdp {
 
                 // Store and check change
                 v_iter->second = new_value;
-                max_change = std::max(max_change, std::abs(new_value - m_value_function.at(state)));
+                delta = std::max(delta, std::abs(new_value - m_value_function.at(state)));
             }
 
             // Update the new value function
             m_value_function = std::move(value_function_copy);
 
-            return max_change;
+            return delta;
         }
 
         /// Makes the policy greedy according to the value function
         /// \return
-        void update_policy() override{
+        bool update_policy() override{
+            // Store if policy has changed
+            bool policy_changed = false;
+
             // Greedify the policy
             for(auto& [state, action_prob_list]: m_state_action_map){
                 std::set<Action> max_actions;
                 Reward max_value = -std::numeric_limits<Reward>::infinity();
 
                 // Calculate new state value
-                for(const auto& [action, probability]: action_prob_list){
+                for(const auto& [action, probability]: action_prob_list) {
                     auto transitions = m_graph_mdp->get_transitions(state, action);
-                    Reward action_value = std::transform_reduce(transitions.begin(), transitions.end(), 0.0, std::plus<Reward>(),
-                                                                [this](const auto& srp){
-                                                                    auto [s_i, r, p] = srp;
-                                                                    return p * (r + m_gamma * m_value_function.at(s_i));
-                                                                });
+                    Reward action_value = std::transform_reduce(
+                            transitions.begin(), transitions.end(), 0.0,
+                            std::plus<>(),
+                            [this](const auto &srp) {
+                                auto [s_i, r, p] = srp;
+                                return p * (r + m_gamma * m_value_function.at(s_i));
+                            });
 
                     // Check if it is the best action
-                    if(action_value > max_value){
+                    if (action_value > max_value) {
                         max_actions.clear();
                         max_actions.insert(action);
                         max_value = action_value;
-                    } else if(action_value == max_value){
+                    } else if (action_value == max_value) {
                         max_actions.insert(action);
                     }
                 }
 
                 // Calculate new probability of actions
+                auto action_prob_list_copy = action_prob_list;
+
                 Probability new_probability = 1.0 / static_cast<Probability>(max_actions.size());
                 std::transform(action_prob_list.begin(), action_prob_list.end(), action_prob_list.begin(),
                                [&max_actions, new_probability](const auto& action_prob){
@@ -346,7 +353,11 @@ namespace rl::mdp {
                         return std::make_pair(a, new_probability);
                     }
                 });
+
+                if(!policy_changed && action_prob_list != action_prob_list_copy) policy_changed = true;
             }
+
+            return policy_changed;
         }
 
     private:

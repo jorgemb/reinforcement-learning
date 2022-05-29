@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <iterator>
+#include <set>
 
 using namespace rl::mdp;
 
@@ -240,25 +241,25 @@ double GridworldGreedyPolicy::policy_evaluation() {
     auto value_table_copy{ m_value_function_table };
 
     // Iterate on each state
-    for(const auto& s: states){
+    for(const auto& state: states){
         // Skip terminal states
-        if(m_gridworld->is_terminal_state(s)) continue;
+        if(m_gridworld->is_terminal_state(state)) continue;
 
         Reward expected_value = 0.0;
-        for(const auto& [a, p]: get_action_probabilities(s)){
-            auto srp_list = m_gridworld->get_transitions(s, a);
-            Reward expected_reward = std::accumulate(srp_list.cbegin(), srp_list.cend(), 0.0,
-                                               [this](const auto& val, const auto& iter){
-                auto [s_i, reward, probability] = iter;
-                return val + probability * (reward + m_gamma * value_from_table(s_i));
-            });
-
-            expected_value += expected_reward * p;
+        for(const auto& [action, probability]: get_action_probabilities(state)){
+            auto srp_list = m_gridworld->get_transitions(state, action);
+            Reward expected_reward = std::transform_reduce(
+                    srp_list.begin(), srp_list.end(), 0.0,
+                    std::plus<>(), [this](const auto& srp){
+                        auto [s_i, r, p] = srp;
+                        return p * (r + m_gamma * value_from_table(s_i));
+                    });
+            expected_value += expected_reward * probability;
         }
 
-        auto [row, col] = s;
+        auto [row, col] = state;
         value_table_copy[row * m_columns + col] = expected_value;
-        delta = std::max(delta, std::abs(value_from_table(s) - expected_value));
+        delta = std::max(delta, std::abs(value_from_table(state) - expected_value));
     }
 
     m_value_function_table = std::move(value_table_copy);
@@ -266,34 +267,52 @@ double GridworldGreedyPolicy::policy_evaluation() {
     return delta;
 }
 
-void GridworldGreedyPolicy::update_policy() {
+bool GridworldGreedyPolicy::update_policy() {
+    // Store if the policy was changed or not
+    bool policy_changed = false;
+
     // Iterate on each state-action
     for(const auto& s: m_gridworld->get_states()){
-        Action best_action{};
+        std::set<Action> best_actions;
         Probability best_action_reward = -std::numeric_limits<Probability>::infinity();
 
         for(const auto& a: m_gridworld->get_actions(s)) {
             auto srp_list = m_gridworld->get_transitions(s, a);
-            Reward expected_reward = std::accumulate(srp_list.cbegin(), srp_list.cend(), 0.0,
-                                                 [this](const auto &val, const auto &iter) {
-                                                     auto [s_i, reward, probability] = iter;
-                                                     return val +
-                                                            probability * (reward + m_gamma * value_from_table(s_i));
-                                                 });
+            Reward expected_reward = std::transform_reduce(
+                    srp_list.begin(), srp_list.end(), 0.0,
+                    std::plus<>(), [this](const auto& srp){
+                        auto [s_i, r, p] = srp;
+                        return p * (r + m_gamma * value_from_table(s_i));
+                    });
 
             // Get best action
             if(expected_reward > best_action_reward){
-                best_action = a;
+                best_actions.clear();
+                best_actions.insert(a);
                 best_action_reward = expected_reward;
+            } else if(expected_reward == best_action_reward){
+                best_actions.insert(a);
             }
         }
 
         // Set the probabilities to the best action
-        // ToTry: This could use a softmax function to set the probabilities according to the expected reward of each action
-        for(const auto& [action, probability]: m_state_action_probability_map[s]){
-            m_state_action_probability_map[s][action] = action == best_action ? 1.0 : 0.0;
+        Probability new_probability = 1.0 / static_cast<Probability>(best_actions.size());
+        auto ap_map = m_state_action_probability_map[s];
+        for(const auto& [action, p]: ap_map){
+            if(best_actions.find(action) != best_actions.end()){
+                m_state_action_probability_map[s][action] = new_probability;
+            } else {
+                m_state_action_probability_map[s][action] = 0.0;
+            }
+        }
+
+        // Check if the policy changed
+        if(ap_map != m_state_action_probability_map[s]){
+            policy_changed = true;
         }
     }
+
+    return policy_changed;
 }
 
 std::shared_ptr<Gridworld> GridworldGreedyPolicy::get_gridworld() const{
