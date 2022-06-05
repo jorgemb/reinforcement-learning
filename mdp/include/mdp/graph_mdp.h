@@ -233,21 +233,22 @@ namespace rl::mdp {
         /// \param graph_mdp
         /// \param gamma
         GraphMDP_Greedy(PGraphMDP graph_mdp, double gamma): m_graph_mdp(graph_mdp), m_gamma(gamma) {
-            auto actions = get_actions_list<Action>();
-            Probability default_probability = 1.0 / static_cast<Probability>(actions.size());
-
-            // Create default action_probability list
-            std::vector<ActionProbability> default_action_probability;
-            std::transform(actions.cbegin(), actions.cend(), std::back_inserter(default_action_probability),
-                           [default_probability](const auto& a){
-                return ActionProbability{a, default_probability};
-            });
-
             // Add one for each element in the list
             for(const auto& state: graph_mdp->get_states()){
                 // Create action probabilities only for non terminal states
+
                 if(!graph_mdp->is_terminal_state(state)) {
-                    m_state_action_map[state] = default_action_probability;
+                    // Calculate initial probability
+                    auto available_actions = graph_mdp->get_actions(state);
+                    Probability probability = 1.0 / static_cast<Probability>(available_actions.size());
+                    std::vector<ActionProbability> ap_vector;
+                    std::transform(available_actions.begin(), available_actions.end(),
+                                   std::back_inserter(ap_vector),
+                                   [probability](const auto& a){
+                                       return ActionProbability{a, probability};
+                                       });
+
+                    m_state_action_map[state] = std::move(ap_vector);
                 }
 
                 // Value function for all states
@@ -288,7 +289,8 @@ namespace rl::mdp {
                 Reward new_value{};
                 for(const auto& [action, probability]: m_state_action_map.at(state)){
                     auto transitions = m_graph_mdp->get_transitions(state, action);
-                    Reward action_value = std::transform_reduce(transitions.begin(), transitions.end(), new_value, std::plus<Reward>(),
+                    Reward action_value = std::transform_reduce(transitions.begin(), transitions.end(),
+                                                                Reward{}, std::plus<>(),
                                           [this](const auto& srp){
                         auto [s_i, r, p] = srp;
                         return p * (r + m_gamma * m_value_function.at(s_i));
@@ -323,11 +325,13 @@ namespace rl::mdp {
                 for(const auto& [action, probability]: action_prob_list) {
                     auto transitions = m_graph_mdp->get_transitions(state, action);
                     Reward action_value = std::transform_reduce(
-                            transitions.begin(), transitions.end(), 0.0,
-                            std::plus<>(),
+                            transitions.begin(), transitions.end(),
+                            Reward{}, std::plus<>(),
                             [this](const auto &srp) {
                                 auto [s_i, r, p] = srp;
-                                return p * (r + m_gamma * m_value_function.at(s_i));
+                                auto ret = p * (r + m_gamma * m_value_function.at(s_i));
+                                return ret;
+//                                return p * (r + m_gamma * m_value_function.at(s_i));
                             });
 
                     // Check if it is the best action

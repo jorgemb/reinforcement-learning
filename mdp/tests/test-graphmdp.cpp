@@ -144,15 +144,14 @@ TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
     auto g = std::make_shared<GraphMDP<State,Action>>();
 
     // According to Example 6.2 from RL Book
-    std::array<State, 7> states{"BAD", "A", "B", "C", "D", "E", "GOOD"};
+    std::array<State, 6> states{"A", "B", "C", "D", "E", "GOOD"};
     auto node_iter = states.begin(), next_node_iter = std::next(states.begin());
     for(; next_node_iter != states.end(); ++node_iter, ++next_node_iter){
-        double r = *next_node_iter == "GOOD" ? 1.0 : 0.0;
+        double r_right = *next_node_iter == "GOOD" ? 1.0 : -1.0;
 
-        g->add_transition(*node_iter, Action::RIGHT, *next_node_iter, r, 1.0);
-        g->add_transition(*next_node_iter, Action::LEFT, *node_iter, 0.0, 1.0);
+        g->add_transition(*node_iter, Action::RIGHT, *next_node_iter, r_right, 1.0);
+        g->add_transition(*next_node_iter, Action::LEFT, *node_iter, -1.0, 1.0);
     }
-    g->set_terminal_state("BAD", 0.0);
     g->set_terminal_state("GOOD", 0.0);
 
     // Policy
@@ -162,6 +161,8 @@ TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
         SECTION("Probabilities") {
             auto default_probability = Approx(1.0 / static_cast<double>(rl::mdp::get_actions_list<Action>().size()));
             for (const auto &s: states) {
+                INFO("State is " << s);
+
                 // Terminal states should not have probabilities
                 if(g->is_terminal_state(s)){
                     REQUIRE_THROWS(policy.get_action_probabilities(s));
@@ -171,7 +172,11 @@ TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
                 auto action_probabilities = policy.get_action_probabilities(s);
                 REQUIRE_FALSE(action_probabilities.empty());
                 for (const auto &[a, p]: action_probabilities) {
-                    REQUIRE(p == default_probability);
+                    if(s == "A"){
+                        REQUIRE(p == 1.0_a);
+                    } else {
+                        REQUIRE(p == default_probability);
+                    }
                 }
             }
         }
@@ -187,15 +192,16 @@ TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
         SECTION("1st iteration"){
             // Evaluation
             auto change = policy.policy_evaluation();
-            REQUIRE(change == 0.5_a);
-            for(const auto& s: states){
+            REQUIRE(change == 1.0_a);
+            for(const auto& s: states) {
+                INFO("State is " << s);
                 auto value_function = policy.value_function(s);
-                if(g->is_terminal_state(s)){
+                if (g->is_terminal_state(s)) {
                     REQUIRE(value_function == 0.0_a);
-                }else if(s == "E"){
-                    REQUIRE(value_function == 0.5_a);
+                } else if (s == "E") {
+                    REQUIRE(value_function == 0.0_a);
                 } else {
-                    REQUIRE(value_function == 0.0_a);
+                    REQUIRE(value_function == -1.0_a);
                 }
             }
 
@@ -206,11 +212,16 @@ TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
                 INFO("State is " << s);
 
                 auto action_prob = policy.get_action_probabilities(s);
-                if(s == "E" || s == "D"){
-                    for(const auto&[a, p]: action_prob){
-                        if(a == Action::RIGHT) REQUIRE(p == 1.0_a);
-                        if(a == Action::LEFT) REQUIRE(p == 0.0_a);
+                if(s == "E" || s == "D") {
+                    for (const auto &[a, p]: action_prob) {
+                        if (a == Action::RIGHT) REQUIRE(p == 1.0_a);
+                        if (a == Action::LEFT) REQUIRE(p == 0.0_a);
                     }
+                } else if (s == "A") {
+                    REQUIRE(action_prob.size() == 1);
+                    auto [a,p] = action_prob[0];
+                    REQUIRE(a == Action::RIGHT);
+                    REQUIRE(p == 1.0_a);
                 } else {
                     for(const auto& [a, p]: action_prob){
                         INFO("Action is " << a);
@@ -220,11 +231,11 @@ TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
             }
         }
 
-        SECTION("Final iteration"){
+        SECTION("Final iteration") {
             // Iterate until there are no more policy changes
             bool policy_changed = true;
             size_t iterations = 0;
-            while(policy_changed || iterations < 10){
+            while (policy_changed || iterations < 10) {
                 policy.policy_evaluation();
                 policy_changed = policy.update_policy();
                 ++iterations;
@@ -232,7 +243,6 @@ TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
             INFO("Total iterations: " << iterations);
 
             // Value function
-            INFO("BAD - " << policy.value_function("BAD"));
             INFO("A - " << policy.value_function("A"));
             INFO("B - " << policy.value_function("B"));
             INFO("C - " << policy.value_function("C"));
@@ -241,20 +251,14 @@ TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
             INFO("GOOD - " << policy.value_function("GOOD"));
 
 
-           std::vector<std::pair<Action, double>> expected_actions{
-                std::make_pair(Action::LEFT, 0.0),
-                std::make_pair(Action::RIGHT, 1.0)
-            };
-            auto actions_matcher = Catch::UnorderedEquals(expected_actions);
-
-            for(const auto& s: states){
-                if(g->is_terminal_state(s)) continue;
+            for (const auto &s: states) {
+                if (g->is_terminal_state(s)) continue;
 
                 INFO("State is " << s);
-                auto action_probabilities = policy.get_action_probabilities(s);
-                INFO(action_probabilities[0].first << " - " << action_probabilities[0].second);
-                INFO(action_probabilities[1].first << " - " << action_probabilities[1].second);
-                REQUIRE_THAT(action_probabilities, actions_matcher);
+                for(const auto& [a, p]: policy.get_action_probabilities(s)){
+                    if(a == Action::RIGHT) REQUIRE(p == 1.0_a);
+                    else REQUIRE(p == 0.0_a);
+                }
             }
         }
     }
