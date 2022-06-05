@@ -24,31 +24,36 @@ namespace rl::mdp {
         DOWN
     };
 
+    /// Template specialization for returning the full action list.
+    /// \return
     template<>
     inline std::vector<GridworldAction> get_actions_list() {
         return {GridworldAction::LEFT, GridworldAction::RIGHT, GridworldAction::UP, GridworldAction::DOWN};
     }
 
     /// Class for representing the current state in Gridworld
-    class GridworldState {
-    public:
+    struct GridworldState {
         GridworldState() = default;
         GridworldState(size_t r, size_t c): row(r), column(c) {}
 
         size_t row, column;
 
+        /// Comparison operator for ordering
+        /// \param other
+        /// \return
         auto operator<(const GridworldState &other) const {
-            return std::make_pair(row, column) < std::make_pair(other.row, other.column);
+            return row<other.row || (other.row >= row && column < other.column);
         }
 
+        /// Equality operator
+        /// \param other
+        /// \return
         auto operator==(const GridworldState &other) const { return row == other.row && column == other.column; }
     };
 
     /// Represents a grid based MDP with transitions between cells
     class Gridworld: public MDP<GridworldState, GridworldAction> {
     public:
-        using RandomEngine = std::default_random_engine;
-
         /// Creates a new Gridworld with the given amount of rows and columns
         /// \param rows
         /// \param columns
