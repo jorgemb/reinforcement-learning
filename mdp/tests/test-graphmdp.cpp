@@ -1,9 +1,11 @@
-#include "mdp/graph_mdp.h"
+#include <mdp/graph_mdp.h>
+#include <mdp/graph_mdp_policy.h>
 
 #define CATCH_CONFIG_MAIN
-#include "catch2/catch.hpp"
+#include <catch2/catch.hpp>
 #include <numeric>
 #include <vector>
+#include <sstream>
 
 using namespace Catch::literals;
 using rl::mdp::GraphMDP;
@@ -263,3 +265,4 @@ TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
         }
     }
 }
+
