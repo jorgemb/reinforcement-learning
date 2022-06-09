@@ -3,6 +3,8 @@
 
 #include <tuple>
 #include <vector>
+#include <memory>
+#include <random>
 
 namespace rl::mdp{
     template <class TState, class TAction, class TReward=double, class TProbability=double>
@@ -103,12 +105,7 @@ namespace rl::mdp{
 
         static Probability srp_probability(const StateRewardProbability& srp){ return std::get<2>(srp); }
         static Probability& srp_probability(StateRewardProbability& srp){ return std::get<2>(srp); }
-
-        static Transition srp_transition(const StateRewardProbability& srp){
-            return Transition{srp_state(srp), srp_reward(srp)};
-        }
     };
-
 
     /// Defines an agent to traverse an MDP
     /// \tparam TState
@@ -139,6 +136,9 @@ namespace rl::mdp{
         /// Called when entering the final state, provides the reward of the last action taken
         /// \param reward Reward of the previous action
         virtual void end(const Reward& reward) = 0;
+
+        /// Virtual destructor
+        virtual ~MDPAgent() = default;
     };
 
 
@@ -176,18 +176,36 @@ namespace rl::mdp{
         /// \param state
         /// \return
         virtual Reward value_function(const State& state) const = 0;
+
+        /// Virtual destructor
+        virtual ~MDPPolicy() = default;
     };
 
-    template <class TState, class TAction, class TReward=double, class TProbability=double>
-    class MDPEnvironment{
+    /// Environment using an MDP as source of information
+    /// \tparam MDP
+    template<class MDP>
+    class MDPEnvironment {
     public:
         // DEFINITIONS
-        using State = TState;
-        using Action = TAction;
-        using Reward = TReward;
-        using Probability = TProbability;
+        using State = typename MDP::State;
+        using Action = typename MDP::Action;
+        using Reward = typename MDP::Reward;
+        using Probability = typename MDP::Probability;
+
+        using RandomEngine = std::default_random_engine;
 
 
+
+        /// Create the environment with the given MDP
+        /// \param mdp
+        /// \param seed Seed for the random generator, use 0 for a random one
+        explicit MDPEnvironment(std::shared_ptr<MDP> mdp, RandomEngine::result_type seed = 0) : m_mdp(mdp),
+        m_random_engine(seed){
+            // Check if a new seed is necessary
+            if(seed == 0){
+                m_random_engine.seed(std::random_device{}());
+            }
+        }
 
         /// Starts the environment and returns the initial state
         /// \return
@@ -198,7 +216,15 @@ namespace rl::mdp{
         /// \param out_reward Return of reward obtained by the action
         /// \param out_next_state Next state after this action
         /// \return True if the next state is a terminal one
-        virtual bool step(const Action& action, Reward& out_reward, State& out_next_state) = 0;
+        virtual bool step(const Action &action, Reward &out_reward, State &out_next_state) = 0;
+
+        /// Virtual destructor
+        virtual ~MDPEnvironment() = default;
+
+    protected:
+        std::shared_ptr<MDP> m_mdp;
+
+        RandomEngine m_random_engine;
     };
 
 
