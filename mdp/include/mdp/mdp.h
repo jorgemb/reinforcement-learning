@@ -76,6 +76,19 @@ namespace rl::mdp{
         /// \return
         virtual std::vector<State> get_terminal_states() const = 0;
 
+        /// Sets the given state as an initial state
+        /// \param s
+        virtual void set_initial_state(const State& s) = 0;
+
+        /// Returns if the given state is an initial state
+        /// \param s
+        /// \return
+        virtual bool is_initial_state(const State& s) const = 0;
+
+        /// Returns a list with the initial states
+        /// \return
+        virtual std::vector<State> get_initial_states() const = 0;
+
         /// Returns a list with the available actions for a given state.
         /// \param state
         /// \return
@@ -105,17 +118,35 @@ namespace rl::mdp{
     template <class TState, class TAction, class TReward=double, class TProbability=double>
     class MDPAgent{
     public:
-        /// Returns the next action to take based on the internal information
-        /// \return
-        virtual TAction next_action() = 0;
+        // DEFINITIONS
+        using State = TState;
+        using Action = TAction;
+        using Reward = TReward;
+        using Probability = TProbability;
 
-        /// Adds the result of a transition from an action
-        /// \param new_state
-        /// \param reward
-        virtual void add_transition_result(const TState& new_state, const TReward& reward) = 0;
+        /// Returns the first action the agent takes according to the given initial state.
+        /// \param initial_state
+        /// \return
+        virtual Action start(const State& initial_state) = 0;
+
+
+        /// Given the reward of the previous action and the following state compute the next action
+        /// \param reward Reward of the previous action
+        /// \param next_state State after the previous action
+        /// \return Next action to perform
+        virtual Action step(const Reward& reward, const State& next_state) = 0;
+
+        /// Called when entering the final state, provides the reward of the last action taken
+        /// \param reward Reward of the previous action
+        virtual void end(const Reward& reward) = 0;
     };
 
 
+    /// Defines the basic functions for an stochastic policy in an MDP
+    /// \tparam TState
+    /// \tparam TAction
+    /// \tparam TReward
+    /// \tparam TProbability
     template <class TState, class TAction, class TReward=double, class TProbability=double>
     class MDPPolicy{
     public:
@@ -145,6 +176,29 @@ namespace rl::mdp{
         /// \param state
         /// \return
         virtual Reward value_function(const State& state) const = 0;
+    };
+
+    template <class TState, class TAction, class TReward=double, class TProbability=double>
+    class MDPEnvironment{
+    public:
+        // DEFINITIONS
+        using State = TState;
+        using Action = TAction;
+        using Reward = TReward;
+        using Probability = TProbability;
+
+
+
+        /// Starts the environment and returns the initial state
+        /// \return
+        virtual State start() = 0;
+
+        /// Makes a step on the environment using the given action.
+        /// \param action Action to perform next step
+        /// \param out_reward Return of reward obtained by the action
+        /// \param out_next_state Next state after this action
+        /// \return True if the next state is a terminal one
+        virtual bool step(const Action& action, Reward& out_reward, State& out_next_state) = 0;
     };
 
 

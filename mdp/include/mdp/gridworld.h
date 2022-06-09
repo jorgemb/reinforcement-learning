@@ -1,13 +1,10 @@
-//
-// Created by Jorge Martinez Bonilla on 10/05/2022.
-//
-
 #ifndef REINFORCEMENT_LEARNING_GRIDWORLD_H
 #define REINFORCEMENT_LEARNING_GRIDWORLD_H
 
 #include "mdp/mdp.h"
 
 #include <map>
+#include <set>
 #include <tuple>
 #include <random>
 #include <limits>
@@ -132,12 +129,34 @@ namespace rl::mdp {
         [[nodiscard]]
         std::vector<State> get_terminal_states() const override;
 
+        /// Sets the given state as an initial state
+        /// \param s
+        void set_initial_state(const State& s) override{
+            m_initial_states.insert(s);
+        }
+
+        /// Returns if the given state is an initial state
+        /// \param s
+        /// \return
+        [[nodiscard]]
+        bool is_initial_state(const State& s) const override{
+            return m_initial_states.find(s) != m_initial_states.cend();
+        }
+
+        /// Returns a list with the initial states
+        /// \return
+        [[nodiscard]]
+        std::vector<State> get_initial_states() const override{
+            return {m_initial_states.begin(), m_initial_states.end()};
+        }
+
+
     private:
         using DynamicsMap = std::multimap<StateAction, StateRewardProbability>;
         DynamicsMap m_dynamics;
         size_t m_rows, m_columns;
 
-        std::vector<State> m_terminal_states;
+        std::set<State> m_terminal_states, m_initial_states;
 
         /// Returns the default transition for the state-action pair
         /// \param state

@@ -195,15 +195,15 @@ void Gridworld::set_terminal_state(const GridworldState &s, const Reward& defaul
     }
 
     // Add the state to the terminal states list
-    m_terminal_states.push_back(s);
+    m_terminal_states.insert(s);
 }
 
 bool Gridworld::is_terminal_state(const GridworldState &s) const {
-    return std::find(m_terminal_states.cbegin(), m_terminal_states.cend(), s) != m_terminal_states.cend();
+    return m_terminal_states.find(s) != m_terminal_states.cend();
 }
 
 std::vector<Gridworld::State> Gridworld::get_terminal_states() const {
-    return m_terminal_states;
+    return {m_terminal_states.begin(), m_terminal_states.end()};
 }
 
 GridworldGreedyPolicy::GridworldGreedyPolicy(std::shared_ptr<Gridworld> gridworld, double gamma):

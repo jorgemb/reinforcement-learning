@@ -39,3 +39,7 @@ catch_discover_tests("test-gridworld")
 add_executable(test-graphmdp tests/test-graphmdp.cpp)
 target_link_libraries(test-graphmdp PRIVATE mdp Catch2::Catch2)
 catch_discover_tests(test-graphmdp)
+
+add_executable(test-graphmdp-greedy tests/test-graphmdp-greedy.cpp)
+target_link_libraries(test-graphmdp-greedy PRIVATE mdp Catch2::Catch2)
+catch_discover_tests(test-graphmdp-greedy)

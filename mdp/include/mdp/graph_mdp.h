@@ -161,6 +161,25 @@ namespace rl::mdp {
             return {m_terminal_states.begin(), m_terminal_states.end()};
         }
 
+        /// Sets the given state as an initial state
+        /// \param s
+        void set_initial_state(const State& s) override{
+            m_initial_states.insert(s);
+        }
+
+        /// Returns if the given state is an initial state
+        /// \param s
+        /// \return
+        bool is_initial_state(const State& s) const override{
+            return m_initial_states.find(s) != m_initial_states.cend();
+        }
+
+        /// Returns a list with the initial states
+        /// \return
+        std::vector<State> get_initial_states() const override{
+            return {m_initial_states.begin(), m_initial_states.end()};
+        }
+
         /// Returns a list with the available actions for a given state.
         /// \param state
         /// \return
@@ -216,8 +235,10 @@ namespace rl::mdp {
         Graph m_dynamics;
         std::map<State, GraphVertex> m_state_to_vertex;
         const std::vector<Action> m_available_actions;
-        std::set<State> m_terminal_states;
 
+        // Terminal and initial states
+        std::set<State> m_terminal_states;
+        std::set<State> m_initial_states;
 
     private:
         /// Gets or creates a new vertex in the graph, maintaining the state-vertex map
