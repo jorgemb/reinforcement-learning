@@ -5,6 +5,8 @@
 #include <vector>
 #include <memory>
 #include <random>
+#include <algorithm>
+#include <stdexcept>
 
 namespace rl::mdp{
     template <class TState, class TAction, class TReward=double, class TProbability=double>
@@ -194,13 +196,11 @@ namespace rl::mdp{
 
         using RandomEngine = std::default_random_engine;
 
-
-
         /// Create the environment with the given MDP
         /// \param mdp
         /// \param seed Seed for the random generator, use 0 for a random one
-        explicit MDPEnvironment(std::shared_ptr<MDP> mdp, RandomEngine::result_type seed = 0) : m_mdp(mdp),
-        m_random_engine(seed){
+        explicit MDPEnvironment(std::shared_ptr<MDP> mdp, RandomEngine::result_type seed = 0):
+        m_mdp(mdp), m_random_engine(seed), m_random_distribution(0.0){
             // Check if a new seed is necessary
             if(seed == 0){
                 m_random_engine.seed(std::random_device{}());
@@ -209,22 +209,60 @@ namespace rl::mdp{
 
         /// Starts the environment and returns the initial state
         /// \return
-        virtual State start() = 0;
+        virtual State start(){
+            // Get initial states and check not empty
+            auto initial_states = m_mdp->get_initial_states();
+            auto num_states = initial_states.size();
+            if(num_states == 0) {
+                throw std::invalid_argument("MDP has not initial states");
+            } else if(initial_states.size() == 1){
+                // Return the only initial state
+                m_last_state = *initial_states.begin();
+            } else {
+                // Return a random state
+                std::sample(initial_states.begin(), initial_states.end(),
+                            &m_last_state, 1,
+                            m_random_engine);
+            }
+
+            return m_last_state;
+        }
 
         /// Makes a step on the environment using the given action.
         /// \param action Action to perform next step
         /// \param out_reward Return of reward obtained by the action
         /// \param out_next_state Next state after this action
         /// \return True if the next state is a terminal one
-        virtual bool step(const Action &action, Reward &out_reward, State &out_next_state) = 0;
+        virtual bool step(const Action &action, Reward &out_reward, State &out_next_state){
+            // Initialize probability
+            Probability accumulated_probability = 0;
+            Probability target_probability = m_random_distribution(m_random_engine);
+
+            // Get transitions from the MDP
+            auto transitions = m_mdp->get_transitions(m_last_state, action);
+            for(const auto& [s_i, r, p]: transitions){
+                accumulated_probability += p;
+                if(accumulated_probability >= target_probability){
+                    out_reward = r;
+                    out_next_state = s_i;
+                    m_last_state = s_i;
+
+                    return m_mdp->is_terminal_state(s_i);
+                }
+            }
+
+            throw std::range_error("Transition probability does not sum 1.0");
+        }
 
         /// Virtual destructor
         virtual ~MDPEnvironment() = default;
 
     protected:
         std::shared_ptr<MDP> m_mdp;
+        State m_last_state;
 
         RandomEngine m_random_engine;
+        std::uniform_real_distribution<Probability> m_random_distribution;
     };
 
 

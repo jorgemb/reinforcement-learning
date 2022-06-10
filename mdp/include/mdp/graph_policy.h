@@ -1,5 +1,5 @@
-#ifndef REINFORCEMENT_LEARNING_GRAPH_MDP_POLICY_H
-#define REINFORCEMENT_LEARNING_GRAPH_MDP_POLICY_H
+#ifndef REINFORCEMENT_LEARNING_GRAPH_POLICY_H
+#define REINFORCEMENT_LEARNING_GRAPH_POLICY_H
 
 namespace rl::mdp {
 
@@ -164,6 +164,6 @@ namespace rl::mdp {
 
 } // Namespace rl::mdp
 
-#include "graph_mdp.h"
+#include "graph.h"
 
-#endif //REINFORCEMENT_LEARNING_GRAPH_MDP_POLICY_H
+#endif //REINFORCEMENT_LEARNING_GRAPH_POLICY_H

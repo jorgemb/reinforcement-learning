@@ -1,5 +1,5 @@
-#ifndef REINFORCEMENT_LEARNING_GRAPH_MDP_H
-#define REINFORCEMENT_LEARNING_GRAPH_MDP_H
+#ifndef REINFORCEMENT_LEARNING_GRAPH_H
+#define REINFORCEMENT_LEARNING_GRAPH_H
 
 #include "mdp/mdp.h"
 #include <boost/graph/adjacency_list.hpp>
@@ -225,7 +225,6 @@ namespace rl::mdp {
             Probability probability;
         };
 
-
         // .. Graph
         using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, VertexProperties, EdgeProperties>;
         using GraphVertex = typename Graph::vertex_descriptor;
@@ -260,4 +259,4 @@ namespace rl::mdp {
     };
 } // rl::mdp
 
-#endif //REINFORCEMENT_LEARNING_GRAPH_MDP_H
+#endif //REINFORCEMENT_LEARNING_GRAPH_H

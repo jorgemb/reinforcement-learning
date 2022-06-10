@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # LibMDP
 set(LIBMDP_SOURCES src/gridworld.cpp)
-set(LIBMDP_HEADERS include/mdp/mdp.h include/mdp/gridworld.h include/mdp/graph_mdp.h include/mdp/graph_mdp_policy.h)
+set(LIBMDP_HEADERS include/mdp/mdp.h include/mdp/gridworld.h include/mdp/graph.h include/mdp/graph_policy.h)
 IF(WIN32)
     add_library(mdp STATIC ${LIBMDP_SOURCES} ${LIBMDP_HEADERS})
 else()
