@@ -116,6 +116,7 @@ TEST_CASE("Gridworld", "[gridworld]") {
             for(const auto& s: g.get_states()){
                 INFO("State: " << s);
                 REQUIRE_FALSE(g.is_terminal_state(s));
+                REQUIRE_FALSE(g.is_initial_state(s));
             }
         }
 
@@ -136,12 +137,31 @@ TEST_CASE("Gridworld", "[gridworld]") {
             }
         }
 
+        SECTION("Initial states"){
+            State initial{0, 0};
+            g.set_initial_state(initial);
+            for(const State& s: g.get_states()){
+                if(s == initial)
+                    REQUIRE(g.is_initial_state(s));
+                else
+                    REQUIRE_FALSE(g.is_initial_state(s));
+            }
+        }
+
         SECTION("Terminal state list" ){
             std::vector<State> terminal_list = {State{0,0}, State{1,1}, State{2,2}};
             for(auto s: terminal_list) g.set_terminal_state(s, 0.0);
 
             auto terminal_list_match = Catch::Matchers::UnorderedEquals(terminal_list);
             REQUIRE_THAT(g.get_terminal_states(), terminal_list_match);
+        }
+
+        SECTION("Initial state list"){
+            std::vector<State> initial_list = {State{0, 0}, State{0, 1}, State{0, 2}};
+            for(auto s: initial_list) g.set_initial_state(s);
+
+            auto initial_list_match = Catch::Matchers::UnorderedEquals(initial_list);
+            REQUIRE_THAT(g.get_initial_states(), initial_list_match);
         }
 
         SECTION("Adding transition to terminal state"){

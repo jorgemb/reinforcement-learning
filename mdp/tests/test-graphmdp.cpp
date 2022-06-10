@@ -119,6 +119,17 @@ TEST_CASE("GraphMDP", "[graphmdp]") {
             REQUIRE(g.is_terminal_state("C"));
         }
 
+        SECTION("Is initial"){
+            g.set_initial_state("A");
+            for(const State& s: g.get_states()){
+                if(s == "A"){
+                    REQUIRE(g.is_initial_state(s));
+                } else {
+                    REQUIRE_FALSE(g.is_initial_state(s));
+                }
+            }
+        }
+
         SECTION("Transitions") {
             for (const auto &a: rl::mdp::get_actions_list<Action>()) {
                 auto transitions = g.get_transitions("C", a);
@@ -133,10 +144,19 @@ TEST_CASE("GraphMDP", "[graphmdp]") {
             REQUIRE_THROWS(g.add_transition("C", Action::RIGHT, "A", 1.0, 1.0));
         }
 
-        SECTION("List") {
+        SECTION("List terminal states") {
             std::vector<State> expected_terminal_states{"C", "D"};
             auto expected_terminal_matcher = Catch::Matchers::UnorderedEquals(expected_terminal_states);
             REQUIRE_THAT(g.get_terminal_states(), expected_terminal_matcher);
+        }
+
+        SECTION("List initial states"){
+            g.set_initial_state("A");
+            g.set_initial_state("B");
+            std::vector<State> initial_states{"A", "B"};
+
+            auto expected_initial_matcher = Catch::Matchers::UnorderedEquals(initial_states);
+            REQUIRE_THAT(g.get_initial_states(), expected_initial_matcher);
         }
     }
 }
