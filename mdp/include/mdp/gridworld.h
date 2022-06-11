@@ -1,7 +1,8 @@
 #ifndef REINFORCEMENT_LEARNING_GRIDWORLD_H
 #define REINFORCEMENT_LEARNING_GRIDWORLD_H
 
-#include "mdp/mdp.h"
+#include <mdp/mdp.h>
+#include <mdp/actions.h>
 
 #include <map>
 #include <set>

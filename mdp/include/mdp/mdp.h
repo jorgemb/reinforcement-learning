@@ -266,11 +266,7 @@ namespace rl::mdp{
     };
 
 
-    /// Template function to get a vector of the action space for a type.
-    /// \tparam ActionType
-    /// \return
-    template<class ActionType>
-    std::vector<ActionType> get_actions_list() = delete;
+
 } // namespace rl::mdp
 
 #endif //REINFORCEMENT_LEARNING_MDP_H

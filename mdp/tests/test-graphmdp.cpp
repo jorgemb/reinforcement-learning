@@ -1,5 +1,5 @@
 #include <mdp/graph.h>
-#include <mdp/graph_policy.h>
+#include <mdp/actions.h>
 
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
@@ -9,7 +9,6 @@
 
 using namespace Catch::literals;
 using rl::mdp::GraphMDP;
-using rl::mdp::GraphMDP_Greedy;
 
 using State = std::string;
 enum class GraphAction{ LEFT, RIGHT };
@@ -162,3 +161,6 @@ TEST_CASE("GraphMDP", "[graphmdp]") {
 }
 
 
+TEST_CASE("MDP Environment", "[graphmdp, mdp]"){
+    using MDP = GraphMDP<State, Action>;
+}

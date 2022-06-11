@@ -1,4 +1,5 @@
 #include "../include/mdp/gridworld.h"
+#include <mdp/actions.h>
 
 #include <numeric>
 #include <algorithm>

@@ -1,7 +1,9 @@
 #ifndef REINFORCEMENT_LEARNING_GRAPH_H
 #define REINFORCEMENT_LEARNING_GRAPH_H
 
-#include "mdp/mdp.h"
+#include <mdp/mdp.h>
+#include <mdp/actions.h>
+
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <map>
