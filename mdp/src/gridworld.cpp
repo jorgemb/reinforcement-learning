@@ -1,4 +1,4 @@
-#include "../include/mdp/gridworld.h"
+#include <mdp/gridworld.h>
 #include <mdp/actions.h>
 
 #include <numeric>
@@ -180,7 +180,8 @@ std::vector<Gridworld::State> Gridworld::get_states() const {
 }
 
 std::vector<Gridworld::Action> Gridworld::get_actions(const GridworldState &state) const {
-    return get_actions_list<GridworldAction>();
+    const auto& actions = ActionTraits<Action>::available_actions();
+    return {actions.begin(), actions.end()};
 }
 
 void Gridworld::set_terminal_state(const GridworldState &s, const Reward& default_reward) {
@@ -188,7 +189,7 @@ void Gridworld::set_terminal_state(const GridworldState &s, const Reward& defaul
     if(is_terminal_state(s)) return;
 
     // Remove all transitions coming from this state, and add a single one that returns to the same state
-    for(const auto& action: get_actions_list<GridworldAction>()){
+    for(const auto& action: ActionTraits<Action>::available_actions()){
         auto [start, end] = m_dynamics.equal_range(StateAction{s, action});
         m_dynamics.erase(start, end);
 
@@ -318,27 +319,6 @@ bool GridworldGreedyPolicy::update_policy() {
 
 std::shared_ptr<Gridworld> GridworldGreedyPolicy::get_gridworld() const{
     return m_gridworld;
-}
-
-
-std::ostream &operator<<(std::ostream &os, const Gridworld::Action& action) {
-    using Action = Gridworld::Action;
-    switch (action) {
-        case Action::LEFT:
-            os << "LEFT";
-            break;
-        case Action::RIGHT:
-            os << "RIGHT";
-            break;
-        case Action::UP:
-            os << "UP";
-            break;
-        case Action::DOWN:
-            os << "DOWN";
-            break;
-    }
-
-    return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const Gridworld::State& state) {

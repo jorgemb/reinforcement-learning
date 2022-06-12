@@ -29,8 +29,7 @@ namespace rl::mdp {
         using typename MDP<TState, TAction>::StateRewardProbability;
 
         /// Constructor accepting list of available actions
-        /// \param available_actions
-        GraphMDP() : m_available_actions(get_actions_list<TAction>()) {}
+        GraphMDP() = default;
 
         /// Returns a transitions from a State-Action pair
         /// \param state
@@ -142,7 +141,7 @@ namespace rl::mdp {
             // Remove all outgoing transitions and set only transitions to itself
             auto v = m_state_to_vertex.at(s);
             boost::clear_out_edges(v, m_dynamics);
-            for (const auto &a: m_available_actions) {
+            for (const auto &a: ActionTraits<Action>::available_actions()) {
                 add_transition(s, a, s, default_reward, 1.0);
             }
 
@@ -235,7 +234,6 @@ namespace rl::mdp {
         // Internal data
         Graph m_dynamics;
         std::map<State, GraphVertex> m_state_to_vertex;
-        const std::vector<Action> m_available_actions;
 
         // Terminal and initial states
         std::set<State> m_terminal_states;

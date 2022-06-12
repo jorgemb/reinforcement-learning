@@ -15,19 +15,7 @@
 
 namespace rl::mdp {
     /// Actions for the Gridworld
-    enum class GridworldAction {
-        LEFT,
-        RIGHT,
-        UP,
-        DOWN
-    };
-
-    /// Template specialization for returning the full action list.
-    /// \return
-    template<>
-    inline std::vector<GridworldAction> get_actions_list() {
-        return {GridworldAction::LEFT, GridworldAction::RIGHT, GridworldAction::UP, GridworldAction::DOWN};
-    }
+    using GridworldAction = FourWayAction;
 
     /// Class for representing the current state in Gridworld
     struct GridworldState {
@@ -223,12 +211,6 @@ namespace rl::mdp {
     };
 
 } // namespace rl::mdp
-
-/// Outputs the action of the Gridworld
-/// \param os
-/// \param action
-/// \return
-std::ostream &operator<<(std::ostream &os, const rl::mdp::Gridworld::Action &action);
 
 /// Outputs the current State
 /// \param os

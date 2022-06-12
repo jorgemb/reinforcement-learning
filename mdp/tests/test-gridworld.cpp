@@ -13,6 +13,7 @@ using rl::mdp::Gridworld;
 using Action = Gridworld::Action;
 using State = Gridworld::State;
 using StateRewardProbability = rl::mdp::Gridworld::StateRewardProbability;
+using rl::mdp::ActionTraits;
 
 TEST_CASE("Gridworld", "[gridworld]") {
     size_t rows = 4, columns = 4;
@@ -27,7 +28,7 @@ TEST_CASE("Gridworld", "[gridworld]") {
         // All actions should be deterministic
         for (size_t i = 0; i < rows; ++i) {
             for (size_t j = 0; j < columns; ++j) {
-                for (auto action: rl::mdp::get_actions_list<Action>()) {
+                for (const auto& action: ActionTraits<Action>::available_actions()) {
                     DYNAMIC_SECTION("Action for " << i << "," << j << " - " << action) {
                         auto state = State{i, j};
                         auto transitions = g.get_transitions(state, action);
@@ -73,7 +74,7 @@ TEST_CASE("Gridworld", "[gridworld]") {
         g.add_transition(State{0, 1}, Action::RIGHT, State{4, 1}, 10., 1.0);
         g.add_transition(State{0, 1}, Action::UP, State{4, 1}, 10., 1.0);
         g.add_transition(State{0, 1}, Action::DOWN, State{4, 1}, 10., 1.0);
-        for (auto action: rl::mdp::get_actions_list<Action>()) {
+        for (auto action: ActionTraits<Action>::available_actions()) {
             DYNAMIC_SECTION("Check transitions (0,1) -> (4,1) :: " << action) {
                 auto [state, reward, probability] = g.get_transitions(State{0, 1}, action)[0];
                 REQUIRE(state == State{4, 1});
@@ -127,7 +128,7 @@ TEST_CASE("Gridworld", "[gridworld]") {
             REQUIRE(g.is_terminal_state(terminal_state));
 
             // Check transitions
-            for(const auto& a: rl::mdp::get_actions_list<Action>()){
+            for(const auto& a: ActionTraits<Action>::available_actions()){
                 for(const auto& t: g.get_transitions(terminal_state, a)){
                     auto [state, reward, probability] = t;
                     REQUIRE(state == terminal_state);
@@ -242,8 +243,9 @@ TEST_CASE("Gridworld", "[gridworld]") {
 
         SECTION("Actions list") {
             // Create actions vector
-            auto actions = rl::mdp::get_actions_list<Action>();
-            auto actions_matcher = UnorderedEquals(actions);
+            auto actions = ActionTraits<Action>::available_actions();
+            std::vector<Action> actions_vector{actions.begin(), actions.end()};
+            auto actions_matcher = UnorderedEquals(actions_vector);
 
             for (const State &s: g.get_states()) {
                 REQUIRE_THAT(g.get_actions(s), actions_matcher);
@@ -268,7 +270,7 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
     SECTION("Default values"){
         rl::mdp::GridworldGreedyPolicy policy(g, 1.0);
         SECTION("Probabilities") {
-            auto actions = rl::mdp::get_actions_list<Action>();
+            auto actions = ActionTraits<Action>::available_actions();
             double default_probability = 1.0 / static_cast<double>(actions.size());
             std::vector<ActionProbability> default_action_probabilities;
             std::transform(actions.begin(), actions.end(),

@@ -1,5 +1,6 @@
 #include <mdp/graph.h>
 #include <mdp/graph_policy.h>
+#include <mdp/actions.h>
 
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
@@ -9,20 +10,8 @@ using rl::mdp::GraphMDP;
 using rl::mdp::GraphMDP_Greedy;
 
 using State = std::string;
-enum class GraphAction{ LEFT, RIGHT };
-using Action = GraphAction;
-
-template<>
-std::vector<GraphAction> rl::mdp::get_actions_list() {
-    return {GraphAction::LEFT, GraphAction::RIGHT};
-}
-
-std::ostream& operator<<(std::ostream& os, const Action& a){
-    if(a == Action::LEFT) os << "LEFT";
-    else os << "RIGHT";
-
-    return os;
-}
+using Action = rl::mdp::TwoWayAction;
+using rl::mdp::ActionTraits;
 
 TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
     // Set up the graph MDP
@@ -44,7 +33,7 @@ TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
 
     SECTION("Default values"){
         SECTION("Probabilities") {
-            auto default_probability = Approx(1.0 / static_cast<double>(rl::mdp::get_actions_list<Action>().size()));
+            auto default_probability = Approx(1.0 / static_cast<double>(ActionTraits<Action>::available_actions().size()));
             for (const auto &s: states) {
                 INFO("State is " << s);
 

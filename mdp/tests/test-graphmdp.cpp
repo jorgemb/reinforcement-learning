@@ -11,20 +11,9 @@ using namespace Catch::literals;
 using rl::mdp::GraphMDP;
 
 using State = std::string;
-enum class GraphAction{ LEFT, RIGHT };
-using Action = GraphAction;
+using Action = rl::mdp::TwoWayAction;
+using rl::mdp::ActionTraits;
 
-template<>
-std::vector<GraphAction> rl::mdp::get_actions_list() {
-    return {GraphAction::LEFT, GraphAction::RIGHT};
-}
-
-std::ostream& operator<<(std::ostream& os, const Action& a){
-    if(a == Action::LEFT) os << "LEFT";
-    else os << "RIGHT";
-
-    return os;
-}
 
 TEST_CASE("GraphMDP", "[graphmdp]") {
     GraphMDP<State, Action> g;
@@ -130,7 +119,7 @@ TEST_CASE("GraphMDP", "[graphmdp]") {
         }
 
         SECTION("Transitions") {
-            for (const auto &a: rl::mdp::get_actions_list<Action>()) {
+            for (const auto &a: ActionTraits<Action>::available_actions()) {
                 auto transitions = g.get_transitions("C", a);
                 REQUIRE(transitions.size() == 1);
 
