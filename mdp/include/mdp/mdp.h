@@ -209,6 +209,7 @@ namespace rl::mdp{
 
         /// Starts the environment and returns the initial state
         /// \return
+        [[nodiscard]]
         virtual State start(){
             // Get initial states and check not empty
             auto initial_states = m_mdp->get_initial_states();
@@ -228,12 +229,12 @@ namespace rl::mdp{
             return m_last_state;
         }
 
+
         /// Makes a step on the environment using the given action.
         /// \param action Action to perform next step
-        /// \param out_reward Return of reward obtained by the action
-        /// \param out_next_state Next state after this action
-        /// \return True if the next state is a terminal one
-        virtual bool step(const Action &action, Reward &out_reward, State &out_next_state){
+        /// \return Tuple with [next state, reward of current action, bool is_final]
+        [[nodiscard]]
+        virtual std::tuple<State, Reward, bool> step(const Action &action){
             // Initialize probability
             Probability accumulated_probability = 0;
             Probability target_probability = m_random_distribution(m_random_engine);
@@ -243,11 +244,8 @@ namespace rl::mdp{
             for(const auto& [s_i, r, p]: transitions){
                 accumulated_probability += p;
                 if(accumulated_probability >= target_probability){
-                    out_reward = r;
-                    out_next_state = s_i;
                     m_last_state = s_i;
-
-                    return m_mdp->is_terminal_state(s_i);
+                    return std::make_tuple(s_i, r, m_mdp->is_terminal_state(s_i));
                 }
             }
 

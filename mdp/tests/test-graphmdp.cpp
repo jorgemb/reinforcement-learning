@@ -6,16 +6,16 @@
 #include <numeric>
 #include <vector>
 #include <sstream>
+#include <map>
 
 using namespace Catch::literals;
 using rl::mdp::GraphMDP;
-
-using State = std::string;
-using Action = rl::mdp::TwoWayAction;
+using rl::mdp::MDPEnvironment;
 using rl::mdp::ActionTraits;
 
-
 TEST_CASE("GraphMDP", "[graphmdp]") {
+    using State = std::string;
+    using Action = rl::mdp::TwoWayAction;
     GraphMDP<State, Action> g;
     std::vector<State> states{"BAD", "A", "B", "C", "D", "E", "GOOD"};
 
@@ -151,5 +151,91 @@ TEST_CASE("GraphMDP", "[graphmdp]") {
 
 
 TEST_CASE("MDP Environment", "[graphmdp, mdp]"){
+    using State = std::string;
+    using Action = rl::mdp::TwoWayAction;
+
     using MDP = GraphMDP<State, Action>;
+    using Environment = rl::mdp::MDPEnvironment<MDP>;
+
+    // Create initial elements
+    auto g = std::make_shared<MDP>();
+    std::array<State, 3> states{"A", "B", "C"};
+    for (size_t i = 0; i < states.size(); ++i) {
+        size_t left = (i + 2) % 3;
+        size_t right = (i + 1) % 3;
+
+        g->add_transition(states[i], Action::LEFT, states[left], 0.0, 1.0);
+        g->add_transition(states[i], Action::LEFT, states[i], 0.0, 1.0);
+        g->add_transition(states[i], Action::RIGHT, states[right], 0.0, 1.0);
+        g->add_transition(states[i], Action::RIGHT, states[i], 0.0, 1.0);
+    }
+    Environment e(g, 42);
+
+    SECTION("Start environment"){
+        REQUIRE_THROWS(e.start());
+
+        // Set initial state
+        State initial{"B"};
+        g->set_initial_state(initial);
+        REQUIRE(e.start() == initial);
+    }
+
+    for(const auto& action: ActionTraits<Action>::available_actions()) {
+        DYNAMIC_SECTION("Step environment - " << action) {
+            State initial{"B"};
+            g->set_initial_state(initial);
+
+            std::map<State, size_t> state_counts;
+            size_t total = 1000;
+            for(size_t i = 0; i < total; ++i){
+                // Do single step
+                static_cast<void>(e.start()); // Discard initial state
+                auto [next_state, reward, is_final] = e.step(action);
+                REQUIRE_FALSE(is_final);
+                REQUIRE(reward == 0.0_a);
+
+                // Count state
+                state_counts[next_state] += 1;
+            }
+
+            // Check states ratio
+            auto transitions = g->get_transitions(initial, action);
+            auto expected_ratio =
+                    Approx(static_cast<double>(total) / static_cast<double>(transitions.size() * total))
+                    .margin(0.01);
+
+            std::set<State> transition_states;
+            std::transform(transitions.begin(), transitions.end(),
+                           std::inserter(transition_states, transition_states.begin()),
+                           [](const auto& srp){ return MDP::srp_state(srp); });
+
+            for(const auto& current_state: states){
+                if(transition_states.find(current_state) != transition_states.end()){
+                    // Expected state
+                    double state_ratio = static_cast<double>(state_counts[current_state]) / static_cast<double>(total);
+                    REQUIRE(state_ratio == expected_ratio);
+                } else {
+                    // State should not have appeared
+                    REQUIRE(state_counts[current_state] == 0);
+                }
+            }
+        }
+    }
+
+    SECTION("End state"){
+        State initial{"B"}, final{"A"};
+        g->set_initial_state("B");
+        g->set_terminal_state("A", 0.0);
+
+        State current_state = e.start();
+        while(current_state != final){
+            auto [s_i, r, is_final] = e.step(Action::RIGHT);
+            if(is_final) {
+                REQUIRE(r == 0.0_a);
+                REQUIRE(s_i == final);
+            }
+
+            current_state = s_i;
+        }
+    }
 }

@@ -13,7 +13,7 @@ using State = std::string;
 using Action = rl::mdp::TwoWayAction;
 using rl::mdp::ActionTraits;
 
-TEST_CASE("GraphMDP_GreedyPolicy", "[graphmdp]"){
+TEST_CASE("GraphMDP GreedyPolicy", "[graphmdp]"){
     // Set up the graph MDP
     auto g = std::make_shared<GraphMDP<State,Action>>();
 
