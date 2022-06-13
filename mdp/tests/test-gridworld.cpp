@@ -9,14 +9,15 @@
 
 using namespace Catch::literals;
 using rl::mdp::Gridworld;
-
-using Action = Gridworld::Action;
-using State = Gridworld::State;
-using StateRewardProbability = rl::mdp::Gridworld::StateRewardProbability;
 using rl::mdp::ActionTraits;
 
+using StateRewardProbability = rl::mdp::Gridworld::StateRewardProbability;
+
 TEST_CASE("Gridworld", "[gridworld]") {
-    size_t rows = 4, columns = 4;
+    using Action = Gridworld::Action;
+    using State = Gridworld::State;
+
+    size_t rows = 5, columns = 4;
     Gridworld g(rows, columns);
 
     SECTION("Standard properties") {
@@ -263,6 +264,9 @@ std::ostream& operator<<(std::ostream& os, const ActionProbability& ap){
 }
 
 TEST_CASE("Gridworld Policy", "[gridworld]"){
+    using Action = Gridworld::Action;
+    using State = Gridworld::State;
+
     // Initialize elements
     size_t rows = 4, columns = 4;
     auto g = std::make_shared<Gridworld>(rows, columns);
@@ -459,6 +463,52 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
                 INFO("State: " << state);
                 match(policy.get_action_probabilities(state), expected);
             }
+        }
+    }
+}
+
+TEST_CASE("Gridworld w/ MDPEnvironment", "[gridworld, mdpenvironment]"){
+    using Action = Gridworld::Action;
+    using State = Gridworld::State;
+    using Environment = rl::mdp::MDPEnvironment<Gridworld>;
+    size_t rows = 4, columns = 4;
+
+    // Create initial grid and environment
+    auto grid = std::make_shared<Gridworld>(rows, columns);
+    Environment env(grid, 42);
+
+    SECTION("Start"){
+        REQUIRE_THROWS(env.start());
+
+        State initial{0, 0};
+        grid->set_initial_state(initial);
+        REQUIRE(env.start() == initial);
+    }
+
+    // Random number generator
+    auto random_engine = std::default_random_engine(42);
+    auto action_dist = std::uniform_int_distribution(0, 3);
+
+    SECTION("Step"){
+        State initial{0, 0};
+        State final{3, 3};
+        grid->set_initial_state(initial);
+        grid->set_terminal_state(final, 0.0);
+
+        State current_state = env.start();
+        auto available_actions = ActionTraits<Action>::available_actions();
+        while(current_state != final){
+            // Take a random action until the end is reached
+            Action action = available_actions[action_dist(random_engine)];
+            auto [s_i, reward, is_final] = env.step(action);
+
+            if(is_final){
+                REQUIRE(s_i == final);
+            } else {
+                REQUIRE_FALSE(grid->is_terminal_state(s_i));
+            }
+
+            current_state = s_i;
         }
     }
 }

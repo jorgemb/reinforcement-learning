@@ -35,6 +35,11 @@ namespace rl::mdp {
         /// \param other
         /// \return
         auto operator==(const GridworldState &other) const { return row == other.row && column == other.column; }
+
+        /// Inequality operator
+        /// \param other
+        /// \return
+        auto operator!=(const GridworldState& other) const { return !this->operator==(other); }
     };
 
     /// Represents a grid based MDP with transitions between cells

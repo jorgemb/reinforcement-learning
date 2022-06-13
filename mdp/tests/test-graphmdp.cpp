@@ -150,7 +150,7 @@ TEST_CASE("GraphMDP", "[graphmdp]") {
 }
 
 
-TEST_CASE("MDP Environment", "[graphmdp, mdp]"){
+TEST_CASE("Graph w/ MDPEnvironment", "[graphmdp, mdp]"){
     using State = std::string;
     using Action = rl::mdp::TwoWayAction;
 
@@ -186,7 +186,7 @@ TEST_CASE("MDP Environment", "[graphmdp, mdp]"){
             g->set_initial_state(initial);
 
             std::map<State, size_t> state_counts;
-            size_t total = 1000;
+            size_t total = 10000;
             for(size_t i = 0; i < total; ++i){
                 // Do single step
                 static_cast<void>(e.start()); // Discard initial state
@@ -202,7 +202,7 @@ TEST_CASE("MDP Environment", "[graphmdp, mdp]"){
             auto transitions = g->get_transitions(initial, action);
             auto expected_ratio =
                     Approx(static_cast<double>(total) / static_cast<double>(transitions.size() * total))
-                    .margin(0.01);
+                    .margin(0.05);
 
             std::set<State> transition_states;
             std::transform(transitions.begin(), transitions.end(),
