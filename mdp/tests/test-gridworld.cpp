@@ -486,7 +486,7 @@ TEST_CASE("Gridworld w/ MDPEnvironment", "[gridworld, mdpenvironment]"){
     }
 
     // Random number generator
-    auto random_engine = std::default_random_engine(42);
+    auto random_engine = std::default_random_engine(42); // NOLINT(cert-msc51-cpp)
     auto action_dist = std::uniform_int_distribution(0, 3);
 
     SECTION("Step"){
