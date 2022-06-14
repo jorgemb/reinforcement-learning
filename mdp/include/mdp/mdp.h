@@ -315,7 +315,7 @@ namespace rl::mdp{
                 if(is_terminal){
                     agent->end(reward);
                 } else {
-                    current_action = step(reward, s_i);
+                    current_action = agent->step(reward, s_i);
                 }
 
                 ++results.total_steps;

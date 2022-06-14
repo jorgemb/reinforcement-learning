@@ -467,7 +467,7 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
     }
 }
 
-TEST_CASE("Gridworld w/ MDPEnvironment", "[gridworld, mdpenvironment]"){
+TEST_CASE("Gridworld w/ MDPEnvironment", "[gridworld][mdp_environment]"){
     using Action = Gridworld::Action;
     using State = Gridworld::State;
     using Environment = rl::mdp::MDPEnvironment<Gridworld>;

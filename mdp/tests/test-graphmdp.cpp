@@ -150,7 +150,7 @@ TEST_CASE("GraphMDP", "[graphmdp]") {
 }
 
 
-TEST_CASE("Graph w/ MDPEnvironment", "[graphmdp, mdp]"){
+TEST_CASE("Graph w/ MDPEnvironment", "[graphmdp][mdp]"){
     using State = std::string;
     using Action = rl::mdp::TwoWayAction;
 
