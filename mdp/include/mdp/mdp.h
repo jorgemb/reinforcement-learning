@@ -264,6 +264,75 @@ namespace rl::mdp{
     };
 
 
+    /// Represents an experiment of an Agent traversing an Environment
+    /// \tparam Environment
+    /// \tparam Agent
+    template <class Environment, class Agent>
+    class MDPExperiment{
+    public:
+        // DEFINITIONS
+        using State = typename Environment::State;
+        using Action = typename Environment::Action;
+        using Reward = typename Environment::Reward;
+        using Probability = typename Environment::Probability;
+
+        /// Results of an episode
+        struct EpisodeResults{
+            /// Default constructor for results
+            EpisodeResults(): last_state{}, total_reward{}, total_steps{0}, reached_terminal_state{false} {}
+
+            State last_state;
+            Reward total_reward;
+
+            size_t total_steps;
+            bool reached_terminal_state;
+        };
+
+        /// Experiment constructor
+        /// \param max_steps Maximum steps allowed for a single episode run
+        explicit MDPExperiment(size_t max_steps): m_max_steps(max_steps) {}
+
+        /// Performs an episode in the environment using the provided agent
+        /// \param environment
+        /// \param agent
+        virtual EpisodeResults do_episode(std::shared_ptr<Environment> environment, std::shared_ptr<Agent> agent){
+            EpisodeResults results;
+
+            // Initialize environment
+            bool is_terminal_state = false;
+            results.last_state = environment->start();
+            Action current_action = agent->start(results.last_state);
+
+            // Perform step actions
+            while(results.total_steps < m_max_steps && !is_terminal_state){
+                // Environment
+                auto [s_i, reward, is_terminal] = environment->step(current_action);
+                results.last_state = s_i;
+                results.total_reward += reward;
+                is_terminal_state = is_terminal;
+
+                // Agent
+                if(is_terminal){
+                    agent->end(reward);
+                } else {
+                    current_action = step(reward, s_i);
+                }
+
+                ++results.total_steps;
+            }
+
+            // If the terminal state was reached it means the experiment ended correctly
+            results.reached_terminal_state = is_terminal_state;
+
+            return results;
+        }
+
+        /// Default destructor
+        virtual ~MDPExperiment() = default;
+
+    protected:
+        size_t m_max_steps;
+    };
 
 } // namespace rl::mdp
 

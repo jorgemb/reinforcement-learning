@@ -7,13 +7,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 # LibMDP
 set(LIBMDP_SOURCES
         src/gridworld.cpp
-        src/actions.cpp)
+        src/actions.cpp
+        src/agents.cpp)
 set(LIBMDP_HEADERS
         include/mdp/mdp.h
         include/mdp/gridworld.h
         include/mdp/graph.h
         include/mdp/graph_policy.h
-        include/mdp/actions.h)
+        include/mdp/actions.h
+        include/mdp/agents.h)
 IF(WIN32)
     add_library(mdp STATIC ${LIBMDP_SOURCES} ${LIBMDP_HEADERS})
 else()
@@ -50,3 +52,8 @@ catch_discover_tests(test-graphmdp)
 add_executable(test-graphmdp-greedy tests/test-graphmdp-greedy.cpp)
 target_link_libraries(test-graphmdp-greedy PRIVATE mdp Catch2::Catch2)
 catch_discover_tests(test-graphmdp-greedy)
+
+# Tests :: Agents
+add_executable(test-agents tests/test-agents.cpp)
+target_link_libraries(test-agents PRIVATE mdp Catch2::Catch2)
+catch_discover_tests(test-agents)
