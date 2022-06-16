@@ -238,6 +238,48 @@ namespace rl::mdp {
         std::map<StateAction, ReturnsInfo> m_returns;
     };
 
+    template<class TState, class TAction>
+    class TD0Agent: public MDPAgent<TState, TAction>{
+    public:
+        using typename MDPAgent<TState, TAction>::Reward;
+        using RandomEngine = typename BasicAgentPolicy<TState, TAction>::RandomEngine;
+
+        TD0Agent(double alpha = 0.2, double gamma = 1.0, double epsilon = 0.1, typename RandomEngine::result_type seed = 0)
+        : m_gamma(gamma), m_epsilon(epsilon), m_policy(seed), m_alpha(alpha)
+        {}
+
+        TAction start(const TState &initial_state) override {
+            m_last_state = initial_state;
+            m_last_action = m_policy.best_action_e(initial_state, m_epsilon);
+
+            return m_last_action;
+        }
+
+        TAction step(const Reward &reward, const TState &next_state) override {
+            TAction next_action = m_policy.best_action_e(next_state, m_epsilon);
+
+            Reward value = m_alpha * (reward + m_gamma * m_policy.value(next_state, next_action) - m_policy.value(m_last_state, m_last_action));
+            m_policy.value(m_last_state, m_last_action) += value;
+
+            m_last_state = next_state;
+            m_last_action = next_action;
+
+            return next_action;
+        }
+
+        void end(const Reward &reward) override {
+            Reward value = m_alpha * (reward - m_policy.value(m_last_state, m_last_action));
+            m_policy.value(m_last_state, m_last_action) += value;
+        }
+
+    private:
+        double m_epsilon, m_gamma, m_alpha;
+        BasicAgentPolicy<TState, TAction> m_policy;
+
+        TState m_last_state;
+        TAction m_last_action;
+    };
+
 } // namespace rl::mdp
 
 #endif //REINFORCEMENT_LEARNING_AGENTS_H

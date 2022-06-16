@@ -11,7 +11,10 @@ using namespace Catch::literals;
 using namespace rl::mdp;
 using RandomEngine = std::default_random_engine;
 
-TEMPLATE_TEST_CASE("Gridworld Agents", "[gridworld][agents]", (BasicRandomAgent<GridworldState, GridworldAction>), (MCAgent<GridworldState, GridworldAction>)) {
+TEMPLATE_TEST_CASE("Gridworld Agents", "[gridworld][agents]",
+                   (BasicRandomAgent<GridworldState, GridworldAction>),
+                   (MCAgent<GridworldState, GridworldAction>),
+                   (TD0Agent<GridworldState, GridworldAction>)) {
     RandomEngine::result_type seed(42);
     size_t max_steps(1000);
 

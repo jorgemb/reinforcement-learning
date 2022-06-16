@@ -32,6 +32,7 @@ using rl::mdp::GridworldState;
 using rl::mdp::GridworldAction;
 using RandomAgent = rl::mdp::BasicRandomAgent<GridworldState, GridworldAction>;
 using MCAgent = rl::mdp::MCAgent<GridworldState, GridworldAction>;
+using TD0Agent = rl::mdp::TD0Agent<GridworldState, GridworldAction>;
 
 /// Run a full experiment with a given agent
 /// \tparam Agent
@@ -109,6 +110,7 @@ int main(){
     // Run experiment
     run_basic_experiment<>(gridworld, std::make_shared<RandomAgent>(seed), "Random agent", plot);
     run_basic_experiment<>(gridworld, std::make_shared<MCAgent>(1.0, 0.1, seed), "MCAgent", plot);
+    run_basic_experiment<>(gridworld, std::make_shared<TD0Agent>(0.5, 1.0, 0.1, seed), "TD0_Agent", plot);
 
     // Show plot
     plot.show();
