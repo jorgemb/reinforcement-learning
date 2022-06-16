@@ -21,12 +21,10 @@ TEST_CASE("GraphMDP GreedyPolicy", "[graphmdp]"){
     std::array<State, 6> states{"A", "B", "C", "D", "E", "GOOD"};
     auto node_iter = states.begin(), next_node_iter = std::next(states.begin());
     for(; next_node_iter != states.end(); ++node_iter, ++next_node_iter){
-        double r_right = *next_node_iter == "GOOD" ? 1.0 : -1.0;
-
-        g->add_transition(*node_iter, Action::RIGHT, *next_node_iter, r_right, 1.0);
+        g->add_transition(*node_iter, Action::RIGHT, *next_node_iter, -1.0, 1.0);
         g->add_transition(*next_node_iter, Action::LEFT, *node_iter, -1.0, 1.0);
     }
-    g->set_terminal_state("GOOD", 0.0);
+    g->set_terminal_state("GOOD", 1.0);
 
     // Policy
     GraphMDP_Greedy<State, Action> policy(g, 1.0);

@@ -60,5 +60,5 @@ catch_discover_tests(test-graphmdp-greedy)
 
 # Tests :: Agents
 add_executable(test-agents tests/test-agents.cpp)
-target_link_libraries(test-agents PRIVATE mdp Catch2::Catch2)
+target_link_libraries(test-agents PRIVATE mdp Catch2::Catch2 sciplot::sciplot)
 catch_discover_tests(test-agents)
