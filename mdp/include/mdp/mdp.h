@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <random>
+#include <optional>
 #include <algorithm>
 #include <stdexcept>
 
@@ -67,9 +68,11 @@ namespace rl::mdp{
         virtual std::vector<State> get_states() const = 0;
 
         /// Marks a state as a terminal state. This makes all transitions out of this state to point to it again
-        /// with the given reward.
-        /// \param s
-        virtual void set_terminal_state(const State& s, const Reward& default_reward) = 0;
+        /// with zero reward. If default reward is provided, it is used for setting
+        /// the reward of reaching this state from other states.
+        /// \param s State to mark as terminal
+        /// \param default_reward
+        virtual void set_terminal_state(const State& s, std::optional<Reward> default_reward) = 0;
 
         /// Returns true if the given State is a terminal state.
         /// \param s

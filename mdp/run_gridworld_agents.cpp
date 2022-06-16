@@ -18,7 +18,7 @@ using std::chrono::duration_cast;
 using ms_duration = std::chrono::duration<double, std::milli>;
 
 // Experiment parameters
-const RandomEngine::result_type seed = 0;
+const RandomEngine::result_type seed = 321;
 constexpr size_t max_steps = 1000, total_episodes = 200;
 
 /// Run a full experiment with a given agent
@@ -30,18 +30,18 @@ void run_basic_experiment(const std::shared_ptr<Gridworld>& gridworld){
     using Reward = Environment::Reward;
 
     // Create environment, agent and experiment
-    auto environment = std::make_shared<Environment>(gridworld, seed);
     auto agent = std::make_shared<Agent>();
     Experiment experiment(max_steps);
 
     // Create accumulators
     namespace accum = boost::accumulators;
     accum::accumulator_set<size_t, accum::stats<accum::tag::mean, accum::tag::max, accum::tag::min>> steps;
-    accum::accumulator_set<Reward, accum::stats<accum::tag::mean>> rewards;
+    accum::accumulator_set<Reward, accum::stats<accum::tag::mean, accum::tag::max>> rewards;
 
     // Run each episode
     auto start_time = Clock::now();
     for(size_t current_episode=0; current_episode < total_episodes; ++current_episode){
+        auto environment = std::make_shared<Environment>(gridworld, seed);
         auto results = experiment.do_episode(environment, agent);
 
         steps(results.total_steps);
@@ -50,10 +50,10 @@ void run_basic_experiment(const std::shared_ptr<Gridworld>& gridworld){
     auto total_time = Clock::now() - start_time;
 
     // Show statistics
-    fmt::print("Steps -- min={}, max={}, avg={}\n",
+    fmt::print("\tSteps -- min={}, max={}, avg={}\n",
                accum::min(steps), accum::max(steps), accum::mean(steps));
-    fmt::print("Reward -- avg={}\n", accum::mean(rewards));
-    fmt::print("\tRunning time -- {} ms\n", duration_cast<ms_duration>(total_time).count());
+    fmt::print("\tReward -- max={}, avg={}\n", accum::max(rewards), accum::mean(rewards));
+    fmt::print("\tRunning time={} ms\n", duration_cast<ms_duration>(total_time).count());
 }
 
 int main(){

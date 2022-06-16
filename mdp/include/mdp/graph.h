@@ -134,7 +134,7 @@ namespace rl::mdp {
         /// Marks a state as a terminal state. This makes all transitions out of this state to point to it again
         /// with the given reward.
         /// \param s
-        void set_terminal_state(const State &s, const Reward &default_reward) override {
+        void set_terminal_state(const State &s, std::optional<Reward> default_reward) override {
             // Initial check
             if (is_terminal_state(s)) return;
 
@@ -142,7 +142,24 @@ namespace rl::mdp {
             auto v = m_state_to_vertex.at(s);
             boost::clear_out_edges(v, m_dynamics);
             for (const auto &a: ActionTraits<Action>::available_actions()) {
-                add_transition(s, a, s, default_reward, 1.0);
+                add_transition(s, a, s, 0.0, 1.0);
+            }
+
+            // If default reward is provided, change all the incoming transitions
+            if(default_reward) {
+                auto [iter, end] = boost::in_edges(v, m_dynamics);
+                while(iter != end){
+                    auto edge = *iter;
+                    auto source = boost::source(edge, m_dynamics);
+                    auto target = boost::target(edge, m_dynamics);
+
+                    // Check that the changes do not affect self transitions
+                    if(source != target) {
+                        m_dynamics[edge].reward = default_reward.value();
+                    }
+
+                    ++iter;
+                }
             }
 
             // Add to list of terminal states
@@ -227,7 +244,7 @@ namespace rl::mdp {
         };
 
         // .. Graph
-        using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, VertexProperties, EdgeProperties>;
+        using Graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS, VertexProperties, EdgeProperties>;
         using GraphVertex = typename Graph::vertex_descriptor;
         using GraphEdge = typename Graph::edge_descriptor;
 

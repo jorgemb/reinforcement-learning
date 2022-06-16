@@ -98,13 +98,26 @@ TEST_CASE("GraphMDP", "[graphmdp]") {
         g.add_transition("A", Action::RIGHT, "B", 10, 1);
         g.add_transition("B", Action::RIGHT, "C", 10, 1);
         g.add_transition("B", Action::RIGHT, "D", 10, 1);
-        g.set_terminal_state("C", 10.0);
-        g.set_terminal_state("D", 0.0);
+        g.set_terminal_state("C", -10.0);
+        g.set_terminal_state("D", -20.0);
 
         SECTION("Is terminal") {
             REQUIRE_FALSE(g.is_terminal_state("A"));
             REQUIRE_FALSE(g.is_terminal_state("B"));
             REQUIRE(g.is_terminal_state("C"));
+            REQUIRE(g.is_terminal_state("D"));
+        }
+
+        SECTION("Terminal reward"){
+            for(const auto& state: g.get_states()){
+                for(const auto& action: ActionTraits<Action>::available_actions()){
+                    for(const auto& [s_i, reward, probability]: g.get_transitions(state, action)){
+                        INFO("From " << state << " to " << s_i << " with action " << action);
+                        if(state != "C" && s_i == "C") REQUIRE(reward == -10.0_a);
+                        else if(state != "D" && s_i == "D") REQUIRE(reward == -20.0_a);
+                    }
+                }
+            }
         }
 
         SECTION("Is initial"){
@@ -124,8 +137,9 @@ TEST_CASE("GraphMDP", "[graphmdp]") {
                 REQUIRE(transitions.size() == 1);
 
                 auto [s, r, p] = transitions[0];
+                INFO("From C to " << s);
                 REQUIRE(s == "C");
-                REQUIRE(r == 10.0_a);
+                REQUIRE(r == 0.0_a);
                 REQUIRE(p == 1.0_a);
             }
 

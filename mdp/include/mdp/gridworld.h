@@ -48,17 +48,30 @@ namespace rl::mdp {
         /// Creates a new Gridworld with the given amount of rows and columns
         /// \param rows
         /// \param columns
-        Gridworld(size_t rows, size_t columns);
+        Gridworld(size_t rows, size_t columns)
+        : m_rows(rows), m_columns(columns), m_cost_of_living{}, m_bounds_penalty{-1} { }
+
+        /// SETTINGS ///
+
+        /// Set cost of living parameter.
+        /// \param cost_of_living
+        void cost_of_living(Reward cost_of_living){ m_cost_of_living = cost_of_living; }
+
+        /// Set the out-of-bounds penalty
+        /// \param bounds_penalty
+        void bounds_penalty(Reward bounds_penalty){ m_bounds_penalty = bounds_penalty; }
+
+        /// MDP ///
 
         /// Returns the number of rows
         /// \return
         [[nodiscard]]
-        size_t get_rows() const;
+        size_t get_rows() const { return m_rows; }
 
         /// Returns the number of columns
         /// \return
         [[nodiscard]]
-        size_t get_columns() const;
+        size_t get_columns() const { return m_columns; }
 
         /// Returns the Transition from a state action pair. If there are several states
         /// it returns a non-deterministic one
@@ -109,8 +122,10 @@ namespace rl::mdp {
 
         /// Marks a state as a terminal state. This makes all transitions out of this state to point to it again
         /// with reward zero.
-        /// \param s
-        void set_terminal_state(const State& s, const Reward& default_reward) override;
+        /// \param s_term State to mark as terminal
+        /// \param default_reward Reward to use as default in-reward
+        void set_terminal_state(const State& s_term,
+                                std::optional<Reward> default_reward) override;
 
         /// Returns true if the given State is a terminal state.
         /// \param s
@@ -148,7 +163,9 @@ namespace rl::mdp {
     private:
         using DynamicsMap = std::multimap<StateAction, StateRewardProbability>;
         DynamicsMap m_dynamics;
+
         size_t m_rows, m_columns;
+        Reward m_cost_of_living, m_bounds_penalty;
 
         std::set<State> m_terminal_states, m_initial_states;
 
@@ -158,6 +175,12 @@ namespace rl::mdp {
         /// \return
         [[nodiscard]]
         StateRewardProbability transition_default(const State &state, const Action &action) const;
+
+        /// Removes a custom transition to a State
+        /// \param source
+        /// \param action
+        /// \param target
+        void remove_added_transition(const State& source, const Action& action, const State& target);
     };
 
     class GridworldGreedyPolicy: public MDPPolicy<GridworldState, GridworldAction>{

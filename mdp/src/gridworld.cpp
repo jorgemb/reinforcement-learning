@@ -9,16 +9,6 @@
 
 using namespace rl::mdp;
 
-Gridworld::Gridworld(size_t rows, size_t columns) : m_rows(rows), m_columns(columns){ }
-
-size_t Gridworld::get_rows() const {
-    return m_rows;
-}
-
-size_t Gridworld::get_columns() const {
-    return m_columns;
-}
-
 std::vector<Gridworld::StateRewardProbability> Gridworld::get_transitions(const Gridworld::State &state, const Gridworld::Action &action) const {
     StateAction stateAction{state, action};
     size_t number_transitions = m_dynamics.count(stateAction);
@@ -58,33 +48,33 @@ Gridworld::transition_default(const Gridworld::State &state, const Gridworld::Ac
         case Action::LEFT:
             srp = StateRewardProbability{
                     State{state.row, state.column == 0 ? 0 : state.column - 1},
-                    0.0,
+                    m_cost_of_living,
                     1.0};
             break;
         case Action::RIGHT:
             srp = StateRewardProbability{
                     State{state.row, state.column >= m_columns - 1 ? m_columns - 1 : state.column + 1},
-                    0.0,
+                    m_cost_of_living,
                     1.0};
             break;
         case Action::UP:
             srp = StateRewardProbability{
                     State{state.row == 0 ? 0 : state.row - 1, state.column},
-                    0.0,
+                    m_cost_of_living,
                     1.0};
             break;
         case Action::DOWN:
             srp = StateRewardProbability{
                     State{state.row >= m_rows - 1 ? m_rows - 1 : state.row + 1, state.column},
-                    0.0,
+                    m_cost_of_living,
                     1.0};
             break;
     }
 
     // If the new-state == the given state it means we are at the edge
-    // so the reward is -1
+    // so the reward is the out-of-bounds penalty
     if( state == srp_state(srp)){
-        srp_reward(srp) = -1.0;
+        srp_reward(srp) = m_bounds_penalty;
     }
 
     return srp;
@@ -184,20 +174,35 @@ std::vector<Gridworld::Action> Gridworld::get_actions(const GridworldState &stat
     return {actions.begin(), actions.end()};
 }
 
-void Gridworld::set_terminal_state(const GridworldState &s, const Reward& default_reward) {
+void Gridworld::set_terminal_state(const GridworldState &s_term, std::optional<Reward> default_reward) {
     // Check if it is already added
-    if(is_terminal_state(s)) return;
+    if(is_terminal_state(s_term)) return;
 
     // Remove all transitions coming from this state, and add a single one that returns to the same state
     for(const auto& action: ActionTraits<Action>::available_actions()){
-        auto [start, end] = m_dynamics.equal_range(StateAction{s, action});
+        auto [start, end] = m_dynamics.equal_range(StateAction{s_term, action});
         m_dynamics.erase(start, end);
 
-        add_transition(s, action, s, default_reward, 1.0);
+        add_transition(s_term, action, s_term, 0.0, 1.0);
+    }
+
+    // Set in-reward as default reward for transitions coming to this state
+    if(default_reward){
+        for(const auto& state: get_states()){
+            for(const auto& action: ActionTraits<Action>::available_actions()){
+                for(const auto&[s_i, reward, probability]: get_transitions(state, action)){
+                    if(s_i == s_term){
+                        // Change reward of transition to terminal state
+                        remove_added_transition(state, action, s_i);
+                        add_transition(state, action, s_term, default_reward.value(), probability);
+                    }
+                }
+            }
+        }
     }
 
     // Add the state to the terminal states list
-    m_terminal_states.insert(s);
+    m_terminal_states.insert(s_term);
 }
 
 bool Gridworld::is_terminal_state(const GridworldState &s) const {
@@ -206,6 +211,20 @@ bool Gridworld::is_terminal_state(const GridworldState &s) const {
 
 std::vector<Gridworld::State> Gridworld::get_terminal_states() const {
     return {m_terminal_states.begin(), m_terminal_states.end()};
+}
+
+void Gridworld::remove_added_transition(const GridworldState &source, const FourWayAction &action,
+                                        const GridworldState &target) {
+    // Verifies if there are custom transitions with the given parameters
+    auto [start, end] = m_dynamics.equal_range({source, action});
+    for(auto iter=start; iter != end;){
+        auto& [s_i, r, p] = iter->second;
+        if(s_i == target){
+            iter = m_dynamics.erase(iter);
+        } else {
+            ++iter;
+        }
+    }
 }
 
 GridworldGreedyPolicy::GridworldGreedyPolicy(std::shared_ptr<Gridworld> gridworld, double gamma):

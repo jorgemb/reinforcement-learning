@@ -20,51 +20,27 @@ namespace rl::mdp {
 
         /// Default constructor
         /// \param seed Seed for generator, use 0 for random seed
-        BasicGridworldAgent(RandomEngine::result_type seed = 0)
-        : m_random_engine(seed), m_distribution(0, ActionTraits<Action>::available_actions().size()-1){
-            auto actions = ActionTraits<Action>::available_actions();
-            m_actions.insert(m_actions.begin(), actions.begin(), actions.end());
-
-            // Check if seed should be changed
-            if(seed == 0){
-                m_random_engine.seed(std::random_device{}());
-            }
-        }
+        explicit BasicGridworldAgent(RandomEngine::result_type seed = 0);
 
         /// Returns the first action the agent takes according to the given initial state.
         /// \param initial_state
         /// \return
-        Action start(const State& initial_state) override {
-            // Initialize reward
-            m_total_reward = {};
-
-            // Choose a random action
-            return m_actions[m_distribution(m_random_engine)];
-        }
+        Action start(const State& initial_state) override;
 
         /// Given the reward of the previous action and the following state compute the next action
         /// \param reward Reward of the previous action
         /// \param next_state State after the previous action
         /// \return Next action to perform
-        Action step(const Reward& reward, const State& next_state) override {
-            m_total_reward += reward;
-
-            // Choose a random action
-            return m_actions[m_distribution(m_random_engine)];
-        }
+        Action step(const Reward& reward, const State& next_state) override;
 
         /// Called when entering the final state, provides the reward of the last action taken
         /// \param reward Reward of the previous action
-        void end(const Reward& reward) override {
-            m_total_reward += reward;
-        }
+        void end(const Reward& reward) override;
 
         /// Returns the total reward at the moment
         /// \return
         [[nodiscard]]
-        Reward get_reward() const {
-            return m_total_reward;
-        }
+        Reward get_reward() const { return m_total_reward; }
 
     protected:
         std::vector<GridworldAction> m_actions;
@@ -74,6 +50,8 @@ namespace rl::mdp {
 
         Reward m_total_reward;
     };
+
+
 
 } // namespace rl::mdp
 

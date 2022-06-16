@@ -113,6 +113,28 @@ TEST_CASE("Gridworld", "[gridworld]") {
         REQUIRE_THAT(g.get_transitions(from, action), matcher);
     }
 
+    SECTION("Additional properties"){
+        double cost_of_living = -5.0;
+        g.cost_of_living(cost_of_living);
+
+        double out_of_bounds_penalty = -10.0;
+        g.bounds_penalty(out_of_bounds_penalty);
+
+        for(const auto& s: g.get_states()){
+            for(const auto& a: ActionTraits<Action>::available_actions()){
+                for(const auto& [s_i, reward, _]: g.get_transitions(s, a)){
+                    if(s == s_i){
+                        // Bumped into wall
+                        REQUIRE(reward == Approx(out_of_bounds_penalty));
+                    } else {
+                        // Cost of living
+                        REQUIRE(reward == Approx(cost_of_living));
+                    }
+                }
+            }
+        }
+    }
+
     SECTION("Terminal states"){
         SECTION("Default non-terminal states"){
             for(const auto& s: g.get_states()){
@@ -124,7 +146,7 @@ TEST_CASE("Gridworld", "[gridworld]") {
 
         SECTION("Terminal state transitions"){
             State terminal_state = {0 ,0};
-            g.set_terminal_state(terminal_state, 0.0);
+            g.set_terminal_state(terminal_state, std::nullopt);
 
             REQUIRE(g.is_terminal_state(terminal_state));
 
@@ -135,6 +157,41 @@ TEST_CASE("Gridworld", "[gridworld]") {
                     REQUIRE(state == terminal_state);
                     REQUIRE(reward == 0.0_a);
                     REQUIRE(probability == 1.0_a);
+                }
+            }
+        }
+
+        SECTION("Transitions to terminal state"){
+            State terminal_state{1, 1};
+            State test_state{3, 3};
+            double default_reward{2.0};
+            g.add_transition(test_state, Action::RIGHT, terminal_state, 0.0, 1.0);
+            g.add_transition(test_state, Action::RIGHT, terminal_state, 0.0, 1.0);
+            g.set_terminal_state(terminal_state, default_reward);
+
+            double penalty = -0.5, cost_of_living = -1.0;
+            g.bounds_penalty(penalty);
+            g.cost_of_living(cost_of_living);
+
+            // Check transitions to terminal state
+            for(const auto& s: g.get_states()){
+                for(const auto& a: ActionTraits<Action>::available_actions()){
+                    for(const auto&[s_i, reward, probability]: g.get_transitions(s, a)){
+                        if(s_i == terminal_state){
+                            REQUIRE(reward == Approx(default_reward));
+                            if(s == test_state){
+                                REQUIRE(probability == 0.5_a);
+                            } else {
+                                REQUIRE(probability == 1.0_a);
+                            }
+                        } else if(s == s_i) {
+                            REQUIRE(reward == Approx(penalty));
+                            REQUIRE(probability == 1.0_a);
+                        } else {
+                            REQUIRE(reward == Approx(cost_of_living));
+                            REQUIRE(probability == 1.0_a);
+                        }
+                    }
                 }
             }
         }
@@ -305,19 +362,9 @@ TEST_CASE("Gridworld Policy", "[gridworld]"){
 
     SECTION("Expected values"){
         // Set the expected world
+        g->cost_of_living(-1.0);
         std::set<State> terminal_states{State{0, 0}, State{3, 3}};
-        for(auto s: terminal_states) g->set_terminal_state(s, 1.0);
-
-        // Add transitions to all states
-        for(const auto& s: g->get_states()){
-            for(const auto& a: g->get_actions(s)){
-                if(g->is_terminal_state(s)) continue;
-
-                // Add the transitions to the rest of the states
-                auto [s_i, reward, probability] = g->get_transitions(s, a)[0];
-                g->add_transition(s, a, s_i, -1.0, 1.0);
-            }
-        }
+        for(auto s: terminal_states) g->set_terminal_state(s, std::nullopt);
 
         SECTION("Policy evaluation"){
             // Values taken from Sutton & Barto [figure 4.2]

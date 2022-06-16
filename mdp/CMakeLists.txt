@@ -42,6 +42,7 @@ target_link_libraries("run-mdp" PRIVATE mdp fmt::fmt Boost::graph)
 # Run Gridworld Agents
 add_executable("run-gridworld-agents" run_gridworld_agents.cpp)
 target_link_libraries("run-gridworld-agents" PRIVATE mdp fmt::fmt Boost::boost)
+#target_link_options("run-gridworld-agents" PRIVATE /PROFILE) # Profile with VisualStudio
 
 # Tests :: Gridworld
 add_executable("test-gridworld" tests/test-gridworld.cpp)
