@@ -141,6 +141,8 @@ namespace rl::mdp {
         /// Sets the given state as an initial state
         /// \param s
         void set_initial_state(const State& s) override{
+            if(is_wall_state(s) || is_terminal_state(s))
+                throw std::invalid_argument("Terminal or wall states cannot be marked as initial");
             m_initial_states.insert(s);
         }
 
@@ -159,6 +161,25 @@ namespace rl::mdp {
             return {m_initial_states.begin(), m_initial_states.end()};
         }
 
+        /// Sets a states as wall. Meaning all transitions to this revert to previous state with the given penalty.
+        /// \param wall
+        /// \param penalty
+        void set_wall_state(const State& wall, Reward penalty);
+
+        /// Returns true if the state is a Wall
+        /// \param s
+        /// \return
+        bool is_wall_state(const State& s) const{
+            return m_wall_states.find(s) != m_wall_states.end();
+        }
+
+        /// Returns aa list with all states marked as walls
+        /// \return
+        [[nodiscard]]
+        std::vector<State> get_wall_states() const{
+            return {m_wall_states.begin(), m_wall_states.end() };
+        }
+
 
     private:
         using DynamicsMap = std::multimap<StateAction, StateRewardProbability>;
@@ -167,7 +188,7 @@ namespace rl::mdp {
         size_t m_rows, m_columns;
         Reward m_cost_of_living, m_bounds_penalty;
 
-        std::set<State> m_terminal_states, m_initial_states;
+        std::set<State> m_terminal_states, m_initial_states, m_wall_states;
 
         /// Returns the default transition for the state-action pair
         /// \param state
@@ -176,7 +197,7 @@ namespace rl::mdp {
         [[nodiscard]]
         StateRewardProbability transition_default(const State &state, const Action &action) const;
 
-        /// Removes a custom transition to a State
+        /// Removes added transitions between states (reverting to default)
         /// \param source
         /// \param action
         /// \param target

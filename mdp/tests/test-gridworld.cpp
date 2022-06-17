@@ -161,6 +161,36 @@ TEST_CASE("Gridworld", "[gridworld]") {
             }
         }
 
+        SECTION("Wall state transitions"){
+            State wall_state{1, 1};
+
+            // Capture states that would transition into wall
+            using StateAction = std::pair<State,Action>;
+            std::vector<StateAction> states_to_wall;
+            for(const auto& s: g.get_states()){
+                for(const auto& a: ActionTraits<Action>::available_actions()){
+                    for(const auto& [s_i, r, p]: g.get_transitions(s, a)){
+                        if(s_i == wall_state){
+                            REQUIRE(r == 0.0);
+                            REQUIRE(p == 1.0);
+                            states_to_wall.emplace_back(s, a);
+                        }
+                    }
+                }
+            }
+
+            // Add wall and check captured states
+            double penalty = -10.0;
+            g.set_wall_state(wall_state, penalty);
+            for(const auto& [s, a]: states_to_wall){
+                for(const auto& [s_i, r, p]: g.get_transitions(s, a)){
+                    REQUIRE(s == s_i);
+                    REQUIRE(r == Approx(penalty));
+                    REQUIRE(p == 1.0);
+                }
+            }
+        }
+
         SECTION("Transitions to terminal state"){
             State terminal_state{1, 1};
             State test_state{3, 3};
@@ -207,6 +237,17 @@ TEST_CASE("Gridworld", "[gridworld]") {
             }
         }
 
+        SECTION("Wall states"){
+            State wall{1, 1};
+            g.set_wall_state(wall, -2.0);
+            for(const State& s: g.get_states()){
+                if(s == wall)
+                    REQUIRE(g.is_wall_state(s));
+                else
+                    REQUIRE_FALSE(g.is_wall_state(s));
+            }
+        }
+
         SECTION("Terminal state list" ){
             std::vector<State> terminal_list = {State{0,0}, State{1,1}, State{2,2}};
             for(auto s: terminal_list) g.set_terminal_state(s, 0.0);
@@ -223,11 +264,35 @@ TEST_CASE("Gridworld", "[gridworld]") {
             REQUIRE_THAT(g.get_initial_states(), initial_list_match);
         }
 
+        SECTION("Wall state list"){
+            std::vector<State> wall_list = {State{0, 0}, State{0, 1}, State{0, 2}};
+            for(auto s: wall_list) g.set_wall_state(s, -1.0);
+
+            auto wall_list_match = Catch::Matchers::UnorderedEquals(wall_list);
+            REQUIRE_THAT(g.get_wall_states(), wall_list_match);
+        }
+
         SECTION("Adding transition to terminal state"){
             State terminal_state{1, 1};
             g.set_terminal_state(terminal_state, 0.0);
 
             REQUIRE_THROWS(g.add_transition(terminal_state, Action::RIGHT, State{0, 0}, 1.0, 1.0));
+        }
+
+        SECTION("Mixing terminal states"){
+            State initial{0, 0}, wall{1, 1}, terminal{2, 2};
+            g.set_initial_state(initial);
+            g.set_terminal_state(terminal, 0.0);
+            g.set_wall_state(wall, 0.0);
+
+            REQUIRE_THROWS(g.set_initial_state(wall));
+            REQUIRE_THROWS(g.set_initial_state(terminal));
+
+            REQUIRE_THROWS(g.set_wall_state(initial, 0.0));
+            REQUIRE_THROWS(g.set_wall_state(terminal, 0.0));
+
+            REQUIRE_THROWS(g.set_terminal_state(initial, 0.0));
+            REQUIRE_THROWS(g.set_terminal_state(wall, 0.0));
         }
     }
 

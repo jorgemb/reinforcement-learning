@@ -175,6 +175,10 @@ std::vector<Gridworld::Action> Gridworld::get_actions(const GridworldState &stat
 }
 
 void Gridworld::set_terminal_state(const GridworldState &s_term, std::optional<Reward> default_reward) {
+    // Validate
+    if(is_initial_state(s_term) || is_wall_state(s_term))
+        throw std::invalid_argument("Initial or wall states cannot be marked as terminal");
+
     // Check if it is already added
     if(is_terminal_state(s_term)) return;
 
@@ -225,6 +229,31 @@ void Gridworld::remove_added_transition(const GridworldState &source, const Four
             ++iter;
         }
     }
+}
+
+void Gridworld::set_wall_state(const GridworldState &wall, double penalty) {
+    // Wall states cannot be an initial nor a terminal state
+    if(is_terminal_state(wall) || is_initial_state(wall))
+        throw std::invalid_argument("Terminal states cannot be walls");
+
+    // Verify that it hasn't been added
+    if(is_wall_state(wall)) return;
+
+    // Get all transitions to this state and revert
+    for(const auto& state: get_states()){
+        for(const auto& action: ActionTraits<Action>::available_actions()){
+            for(const auto& [s_i, reward, probability]: get_transitions(state, action)){
+                if(s_i == wall){
+                    // Transition that goes to the wall
+                    remove_added_transition(state, action, s_i);
+                    add_transition(state, action, state, penalty, probability);
+                }
+            }
+        }
+    }
+
+    // Add state to the list of walls
+    m_wall_states.insert(wall);
 }
 
 GridworldGreedyPolicy::GridworldGreedyPolicy(std::shared_ptr<Gridworld> gridworld, double gamma):
