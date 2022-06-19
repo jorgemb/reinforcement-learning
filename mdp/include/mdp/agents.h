@@ -238,13 +238,19 @@ namespace rl::mdp {
         std::map<StateAction, ReturnsInfo> m_returns;
     };
 
+    /// Agent that implements the TD(0) approach to learning
+    /// \tparam TState
+    /// \tparam TAction
     template<class TState, class TAction>
     class TD0Agent: public MDPAgent<TState, TAction>{
     public:
         using typename MDPAgent<TState, TAction>::Reward;
         using RandomEngine = typename BasicAgentPolicy<TState, TAction>::RandomEngine;
 
-        TD0Agent(double alpha = 0.2, double gamma = 1.0, double epsilon = 0.1, typename RandomEngine::result_type seed = 0)
+        explicit TD0Agent(double alpha = 0.2,
+                          double gamma = 1.0,
+                          double epsilon = 0.1,
+                          typename RandomEngine::result_type seed = 0)
         : m_gamma(gamma), m_epsilon(epsilon), m_policy(seed), m_alpha(alpha)
         {}
 
