@@ -1,5 +1,5 @@
-#ifndef REINFORCEMENT_LEARNING_GRIDWORLD_H
-#define REINFORCEMENT_LEARNING_GRIDWORLD_H
+#ifndef REINFORCEMENT_LEARNING_MDP_GRIDWORLD_H
+#define REINFORCEMENT_LEARNING_MDP_GRIDWORLD_H
 
 #include <mdp/mdp.h>
 #include <mdp/actions.h>
@@ -275,4 +275,4 @@ std::ostream& operator<<(std::ostream& os, const rl::mdp::GridworldGreedyPolicy&
 
 
 
-#endif //REINFORCEMENT_LEARNING_GRIDWORLD_H
+#endif //REINFORCEMENT_LEARNING_MDP_GRIDWORLD_H

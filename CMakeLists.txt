@@ -18,6 +18,7 @@ find_package(xtl CONFIG REQUIRED)
 find_package(xtensor CONFIG REQUIRED)
 find_package(sciplot CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS graph)
+find_package(SFML COMPONENTS system window graphics CONFIG REQUIRED)
 
 if(NOT WIN32)
   find_package(TBB REQUIRED)
@@ -31,3 +32,4 @@ include(Catch)
 # Add other projects
 add_subdirectory(kbandit/)
 add_subdirectory(mdp/)
+add_subdirectory(draw/)

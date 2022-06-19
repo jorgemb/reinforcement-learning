@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <iterator>
 #include <set>
+#include "SFML/Graphics/RenderTarget.hpp"
 
 using namespace rl::mdp;
 
