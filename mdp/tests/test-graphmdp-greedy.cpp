@@ -2,10 +2,10 @@
 #include <mdp/graph_policy.h>
 #include <mdp/actions.h>
 
-#define CATCH_CONFIG_MAIN
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 using namespace Catch::literals;
+using Catch::Approx;
 using rl::mdp::GraphMDP;
 using rl::mdp::GraphMDP_Greedy;
 

@@ -41,7 +41,7 @@ endif()
 
 # Tests
 add_executable(test-kbandit "tests/test-kbandit.cpp")
-target_link_libraries(test-kbandit PRIVATE kbandit Catch2::Catch2)
+target_link_libraries(test-kbandit PRIVATE kbandit Catch2::Catch2WithMain)
 catch_discover_tests(test-kbandit)
 
 # Install targets

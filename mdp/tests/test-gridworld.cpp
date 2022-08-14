@@ -1,13 +1,13 @@
 #include "mdp/gridworld.h"
 
-#define CATCH_CONFIG_MAIN
-#include "catch2/catch.hpp"
+#include <catch2/catch_all.hpp>
 #include <array>
 #include <algorithm>
 #include <vector>
 #include <iterator>
 
 using namespace Catch::literals;
+using Catch::Approx;
 using rl::mdp::Gridworld;
 using rl::mdp::ActionTraits;
 

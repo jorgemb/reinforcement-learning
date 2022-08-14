@@ -46,19 +46,19 @@ target_link_libraries("run-gridworld-agents" PRIVATE mdp fmt::fmt Boost::boost)
 
 # Tests :: Gridworld
 add_executable("test-gridworld" tests/test-gridworld.cpp)
-target_link_libraries("test-gridworld" PRIVATE mdp Catch2::Catch2)
+target_link_libraries("test-gridworld" PRIVATE mdp Catch2::Catch2WithMain)
 catch_discover_tests("test-gridworld")
 
 # Tests :: GraphMDP
 add_executable(test-graphmdp tests/test-graphmdp.cpp)
-target_link_libraries(test-graphmdp PRIVATE mdp Catch2::Catch2)
+target_link_libraries(test-graphmdp PRIVATE mdp Catch2::Catch2WithMain)
 catch_discover_tests(test-graphmdp)
 
 add_executable(test-graphmdp-greedy tests/test-graphmdp-greedy.cpp)
-target_link_libraries(test-graphmdp-greedy PRIVATE mdp Catch2::Catch2)
+target_link_libraries(test-graphmdp-greedy PRIVATE mdp Catch2::Catch2WithMain)
 catch_discover_tests(test-graphmdp-greedy)
 
 # Tests :: Agents
 add_executable(test-agents tests/test-agents.cpp)
-target_link_libraries(test-agents PRIVATE mdp Catch2::Catch2 sciplot::sciplot)
+target_link_libraries(test-agents PRIVATE mdp Catch2::Catch2WithMain sciplot::sciplot)
 catch_discover_tests(test-agents)

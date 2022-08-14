@@ -1,7 +1,6 @@
 #include "kbandit/k-bandit.h"
 
-#define CATCH_CONFIG_MAIN
-#include "catch2/catch.hpp"
+#include <catch2/catch_all.hpp>
 #include <array>
 #include <algorithm>
 #include <numeric>
@@ -9,6 +8,7 @@
 #include <limits>
 
 using namespace Catch::literals;
+using Catch::Approx;
 
 TEST_CASE("Single bandit", "[kbandit]") {
 	int seed{ 42 };

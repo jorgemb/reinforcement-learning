@@ -1,14 +1,14 @@
 #include <mdp/graph.h>
 #include <mdp/actions.h>
 
-#define CATCH_CONFIG_MAIN
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <numeric>
 #include <vector>
 #include <sstream>
 #include <map>
 
 using namespace Catch::literals;
+using Catch::Approx;
 using rl::mdp::GraphMDP;
 using rl::mdp::MDPEnvironment;
 using rl::mdp::ActionTraits;
